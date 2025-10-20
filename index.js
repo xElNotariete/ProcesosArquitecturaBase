@@ -2,7 +2,7 @@ const fs=require("fs");
 const express = require('express');
 const app = express();
 const modelo = require("./Servidor/modelo.js");
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.use(express.json());
 // Servir archivos estáticos desde la carpeta Cliente
 app.use(express.static(__dirname + "/Cliente"));
