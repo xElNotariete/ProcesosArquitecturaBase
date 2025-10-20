@@ -1,0 +1,41 @@
+{
+  "name": "procesos-arquitectura-base",
+  "version": "1.0.0",
+  "description": "Aplicación base de arquitectura cliente-servidor para procesos",
+  "homepage": "https://github.com/xElNotariete/ProcesosArquitecturaBase#readme",
+  "bugs": {
+    "url": "https://github.com/xElNotariete/ProcesosArquitecturaBase/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xElNotariete/ProcesosArquitecturaBase.git"
+  },
+  "license": "ISC",
+  "author": "Samuel",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jasmine",
+    "testW": "jasmine"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jasmine": "^5.12.0"
+  },
+  "devDependencies": {
+    "jasmine-node": "^1.16.2",
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "cliente-servidor",
+    "arquitectura"
+  ],
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}
