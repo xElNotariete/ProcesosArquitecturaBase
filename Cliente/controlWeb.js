@@ -1,23 +1,16 @@
 function ControlWeb(){
 	
 	this.mostrarAgregarUsuario=function(){
-		var cadena='<div id="mAU" class="form-group">';
-		cadena=cadena+'<label for="nick">Nick:</label>';
-		cadena=cadena+'<input type="text" class="form-control" id="nick">';
-		cadena=cadena+'<button id="btnAU" type="submit" class="btn btn-primary">Submit</button>';
-		cadena=cadena+'</div>';
-		$("#au").append(cadena);
-		
-		$("#btnAU").on("click",function(){
-			let nick=$("#nick").val();
-			if(nick){
-				rest.agregarUsuario(nick);
-				$("#mAU").remove();
-			}
-			else{
-				alert("Por favor, ingrese un nick");
-			}
-		});
+		$('#bnv').remove();
+		$('#mAU').remove();
+		let cadena='<div id="mAU">';
+		cadena = cadena + '<div class="card"><div class="card-body">';
+		cadena = cadena + '<h5 class="card-title">Iniciar Sesión</h5>';
+		cadena = cadena + '<p class="card-text text-muted">Inicia sesión con tu cuenta de Google</p>';
+		cadena = cadena + '<div class="text-center"><a href="/auth/google"><img src="./img/btn_google_signin.svg" style="height:46px;" alt="Sign in with Google"></a></div>';
+		cadena = cadena + '</div></div></div>';
+		$("#au").html(cadena);
+		$("#au").show();
 	}
 	
 	this.mostrarObtenerUsuarios=function(){
@@ -137,4 +130,54 @@ function ControlWeb(){
 			}
 		});
 	}
-}
+
+	this.comprobarSesion=function(){
+ 		let nick=$.cookie("nick");
+ 		if (nick){
+ 			// Mostrar mensaje de bienvenida con botón de cerrar sesión
+ 			$("#au").html('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+ 				'<strong>¡Bienvenido al sistema, ' + nick + '!</strong> ' +
+ 				'<button type="button" class="btn btn-sm btn-outline-danger ml-3" onclick="cw.salir()">' +
+ 				'<i class="fas fa-sign-out-alt"></i> Cerrar Sesión' +
+ 				'</button>' +
+ 				'</div>');
+ 			$("#au").show();
+ 		}
+ 		else{
+ 			cw.mostrarAgregarUsuario();
+ 		}
+	}
+	
+	this.mostrarMensaje=function(msg){
+		$("#au").html('<div class="alert alert-info alert-dismissible fade show" role="alert">' +
+			msg +
+			'<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+			'<span aria-hidden="true">&times;</span>' +
+			'</button>' +
+			'</div>');
+		$("#au").show();
+	}
+	
+	this.salir=function(){
+		let nick=$.cookie("nick");
+		let mensajeDespedida = nick ? 
+			"Hasta pronto, " + nick + "! Sesión cerrada correctamente." : 
+			"Sesión cerrada correctamente.";
+		
+		// Mostrar mensaje de despedida
+		$("#au").html('<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+			'<strong>👋 Adiós!</strong> ' + mensajeDespedida +
+			'</div>');
+		$("#au").show();
+		
+		// Eliminar la cookie
+		$.removeCookie("nick");
+		
+		// Recargar la página después de 2 segundos para que el usuario vea el mensaje
+		setTimeout(function(){
+			location.reload();
+		}, 2000);
+	}
+ }
+ 
+
