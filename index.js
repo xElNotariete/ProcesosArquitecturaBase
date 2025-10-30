@@ -61,9 +61,23 @@ response.json(res);
 });
 
 // Rutas de autenticación con Google
-app.get('/auth/google',
-    passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+app.get('/auth/google', function(req, res, next) {
+    try {
+        const strat = passport._strategy && passport._strategy('google');
+        const configuredCallback = strat && (strat._callbackURL || (strat._oauth2 && strat._oauth2._redirectUri)) || '<unknown>';
+        console.log('[auth/google] request host:', req.headers.host);
+        console.log('[auth/google] protocol:', req.protocol);
+        console.log('[auth/google] configured callback URL:', configuredCallback);
+        console.log('[auth/google] strategy options:', strat && strat._oauth2 && {
+            redirectUri: strat._oauth2._redirectUri,
+            clientId: strat._oauth2._clientId
+        });
+    } catch (e) {
+        console.error('Error logging passport strategy:', e);
+    }
+    // proceed with authentication
+    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
 
 app.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/' }),
