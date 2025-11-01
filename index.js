@@ -2,15 +2,22 @@ const fs=require("fs");
 require('dotenv').config();
 const express = require('express');
 const app = express();
+const cors = require('cors');
+const bodyParser = require("body-parser");
 const passport=require("passport");
 const session=require("express-session");
+const { OAuth2Client } = require('google-auth-library');
 require("./Servidor/passport-setup.js");
 const modelo = require("./Servidor/modelo.js");
 const PORT = process.env.PORT || 8080;
-app.use(express.json());
 
-// Servir archivos estáticos desde la carpeta Cliente
-app.use(express.static(__dirname + "/Cliente"));
+// Cliente OAuth2 para verificar tokens de Google One Tap
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Body parser - solo una vez
+app.use(bodyParser.urlencoded({extended:true}));
+app.use(bodyParser.json());
+app.use(cors());
 
 // Configurar express-session
 app.use(session({
@@ -82,13 +89,48 @@ app.get('/auth/google', function(req, res, next) {
 app.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/' }),
     function(req, res) {
-        // Autenticación exitosa
-        // Agregar el usuario al sistema
-        const nick = req.user.displayName || req.user.email.split('@')[0];
-        sistema.agregarUsuario(nick);
-        res.redirect('/?user=' + encodeURIComponent(nick));
+        console.log('[callback] Autenticación exitosa, procesando usuario...');
+        // Autenticación exitosa - guardar usuario en MongoDB
+        let email = req.user.emails[0].value;
+        console.log('[callback] Email del usuario:', email);
+        sistema.usuarioGoogle({"email": email}, function(obj) {
+            console.log('[callback] Usuario guardado en MongoDB:', obj);
+            res.cookie('nick', obj.email);
+            res.redirect('/');
+        });
     }
 );
+
+// Ruta para manejar Google One Tap callback usando Passport
+app.post('/oneTap/callback',
+    passport.authenticate('google-one-tap', { failureRedirect: '/fallo' }),
+    function(req, res) {
+        console.log('[oneTap/callback] Autenticación exitosa con Passport One Tap');
+        // Successful authentication, redirect to /good
+        res.redirect('/good');
+    }
+);
+
+// Ruta /good para manejar login exitoso de One Tap
+app.get("/good", function(request, response) {
+    let email = request.user.emails ? request.user.emails[0].value : request.user.email;
+    console.log('[good] Usuario autenticado:', email);
+    if (email) {
+        sistema.usuarioGoogle({"email": email}, function(obj) {
+            console.log('[good] Usuario guardado en MongoDB:', obj);
+            response.cookie('nick', obj.email);
+            response.redirect('/');
+        });
+    } else {
+        response.redirect('/');
+    }
+});
+
+// Ruta /fallo para cuando falla la autenticación
+app.get("/fallo", function(request, response) {
+    console.log('[fallo] Autenticación fallida');
+    response.send({nick: "nook"});
+});
 
 app.get('/logout', function(req, res) {
     req.logout(function(err) {
@@ -96,6 +138,9 @@ app.get('/logout', function(req, res) {
         res.redirect('/');
     });
 });
+
+// Servir archivos estáticos desde la carpeta Cliente (al final para que no interfiera con las rutas API)
+app.use(express.static(__dirname + "/Cliente"));
 
 app.listen(PORT, () => {
 console.log(`App está escuchando en el puerto ${PORT}`);

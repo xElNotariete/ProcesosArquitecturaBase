@@ -1,5 +1,15 @@
+const datos = require("./cad.js");
+
 function Sistema(){
  this.usuarios={};
+ // inicializar acceso a datos
+ this.cad = new datos.CAD();
+ // intentar conectar a Mongo Atlas; si funciona, se imprimirá el mensaje
+ this.cad.conectar(function(db){
+   console.log("Conectado a Mongo Atlas");
+ }).catch(function(err){
+   console.error("No se pudo conectar a Mongo Atlas:", err && err.message ? err.message : err);
+ });
 
  this.agregarUsuario=function(nick){
 let res={"nick":-1};
@@ -37,6 +47,13 @@ this.eliminarUsuario = function(nick) {
    this.numeroUsuarios = function() {
     let res = {"num": Object.keys(this.usuarios).length};
     return res;
+  };
+
+  // buscar o crear usuario de Google en MongoDB
+  this.usuarioGoogle = function(usr, callback) {
+    this.cad.buscarOCrearUsuario(usr, function(obj) {
+      callback(obj);
+    });
   };
 
 }
