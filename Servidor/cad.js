@@ -9,7 +9,7 @@ function CAD() {
   this.conectar = async function(callback) {
     const cad = this;
     const uri = process.env.MONGO_URI || process.env.MONGO_URL || 'mongodb+srv://sns:<db_password>@procesocluster.efauuxe.mongodb.net/?appName=ProcesoCluster';
-    const client = new mongo(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    const client = new mongo(uri);
     try {
       await client.connect();
       const database = client.db('sistema');
@@ -31,6 +31,31 @@ function CAD() {
       callback({ error: err.message });
     }
   };
+
+  // buscar usuario en MongoDB
+  this.buscarUsuario = function(obj, callback) {
+    if (!this.usuarios) {
+      console.error("[CAD] Error: colección usuarios no inicializada");
+      callback(undefined);
+      return;
+    }
+    buscar(this.usuarios, obj, callback);
+  };
+
+  // insertar usuario en MongoDB
+  this.insertarUsuario = function(usuario, callback) {
+    insertar(this.usuarios, usuario, callback);
+  };
+
+  // actualizar usuario en MongoDB
+  this.actualizarUsuario = function(obj, callback) {
+    actualizar(this.usuarios, obj, callback);
+  };
+
+  // eliminar usuario en MongoDB
+  this.eliminarUsuario = function(email, callback) {
+    eliminar(this.usuarios, email, callback);
+  };
 }
 
 // función auxiliar para buscar o crear un documento en una colección
@@ -41,13 +66,76 @@ async function buscarOCrear(coleccion, criterio) {
       { $set: criterio },
       { upsert: true, returnDocument: "after", projection: { email: 1 } }
     );
-    console.log("Elemento actualizado");
-    console.log(doc.email || doc.value?.email);
     return { email: doc.email || doc.value?.email };
   } catch (err) {
-    console.error('[buscarOCrear] Error:', err);
+    console.error('[CAD] Error en buscarOCrear:', err.message);
     throw err;
   }
+}
+
+// función auxiliar para buscar un documento en una colección
+function buscar(coleccion, criterio, callback) {
+  try {
+    coleccion.find(criterio).toArray()
+      .then(usuarios => {
+        if (usuarios.length == 0) {
+          callback(undefined);
+        }
+        else {
+          callback(usuarios[0]);
+        }
+      })
+      .catch(error => {
+        console.error("[CAD] Error al buscar:", error.message);
+        callback(undefined);
+      });
+  } catch (error) {
+    console.error("[CAD] Error en búsqueda:", error.message);
+    callback(undefined);
+  }
+}
+
+// función auxiliar para insertar un documento en una colección
+function insertar(coleccion, elemento, callback) {
+  coleccion.insertOne(elemento)
+    .then(result => {
+      callback(elemento);
+    })
+    .catch(err => {
+      console.error("[CAD] Error al insertar:", err.message);
+      callback({error: "Error al insertar"});
+    });
+}
+
+// función auxiliar para actualizar un documento en una colección
+function actualizar(coleccion, obj, callback) {
+  coleccion.findOneAndUpdate({_id: new ObjectId(obj._id)}, {$set: obj},
+    {upsert: false, returnDocument: "after", projection: {email: 1, nick: 1}},
+    function(err, doc) {
+      if (err) { 
+        console.error("[CAD] Error al actualizar:", err.message);
+        throw err; 
+      }
+      else {
+        callback({email: doc.value.email, nick: doc.value.nick});
+      }
+    });
+}
+
+// función auxiliar para eliminar un documento de una colección
+function eliminar(coleccion, email, callback) {
+  coleccion.deleteOne({email: email})
+    .then(result => {
+      if (result.deletedCount === 1) {
+        callback({ok: true, mensaje: "Usuario eliminado correctamente"});
+      } else {
+        callback({ok: false, mensaje: "Usuario no encontrado"});
+      }
+    })
+    .catch(err => {
+      console.error("[CAD] Error al eliminar:", err.message);
+      callback({ok: false, error: "Error al eliminar usuario"});
+    });
 }
 
 module.exports.CAD = CAD;

@@ -4,9 +4,11 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
 const passport=require("passport");
 const session=require("express-session");
 const { OAuth2Client } = require('google-auth-library');
+const LocalStrategy = require('passport-local').Strategy;
 require("./Servidor/passport-setup.js");
 const modelo = require("./Servidor/modelo.js");
 const PORT = process.env.PORT || 8080;
@@ -17,6 +19,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Body parser - solo una vez
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(cors());
 
 // Configurar express-session
@@ -33,6 +36,27 @@ app.use(passport.session());
 
 let sistema = new modelo.Sistema();
 
+passport.use(new LocalStrategy({usernameField:"email",passwordField:"password"},
+function(email,password,done){
+sistema.loginUsuario({"email":email,"password":password},function(user){
+if (user && user.email && user.email !== -1) {
+return done(null, user);
+} else {
+return done(null, false);
+}
+})
+}
+));
+
+const haIniciado=function(request,response,next){
+	if (request.user){
+		next();
+	}
+	else{
+		response.redirect("/")
+	}
+}
+
 app.get("/", function(request,response){
 var contenido=fs.readFileSync(__dirname+"/Cliente/index.html");
 response.setHeader("Content-type","text/html");
@@ -45,7 +69,7 @@ let res=sistema.agregarUsuario(nick);
 response.json(res);
 });
 
-app.get("/obtenerUsuarios",function(request,response){
+app.get("/obtenerUsuarios",haIniciado,function(request,response){
 let usuarios=sistema.obtenerUsuarios();
 response.json(usuarios);
 });
@@ -61,52 +85,111 @@ let res=sistema.numeroUsuarios();
 response.json(res);
 });
 
-app.get("/eliminarUsuario/:nick",function(request,response){
-let nick=request.params.nick;
-let res=sistema.eliminarUsuario(nick);
-response.json(res);
+app.get("/eliminarUsuario/:nick", haIniciado, function(request, response) {
+  const nick = request.params.nick;
+  
+  sistema.eliminarUsuario(nick, function(resultado) {
+    if (resultado.ok) {
+      // Si el usuario eliminado es el usuario actual, cerrar sesión
+      if (request.user && request.user.nick === nick) {
+        request.logout(function(err) {
+          if (err) {
+            console.error('Error al cerrar sesión:', err);
+          }
+          response.clearCookie('nick');
+          response.json({
+            ok: true,
+            mensaje: resultado.mensaje,
+            sesionCerrada: true
+          });
+        });
+      } else {
+        response.json(resultado);
+      }
+    } else {
+      response.json(resultado);
+    }
+  });
+});
+
+app.post("/registrarUsuario",function(request,response){
+sistema.registrarUsuario(request.body,function(res){
+response.send({"nick":res.nick || res.email});
+});
+});
+
+app.get("/confirmarUsuario/:email/:key",function(request,response){
+let email=request.params.email;
+let key=request.params.key;
+sistema.confirmarUsuario({"email":email,"key":key},function(usr){
+if (usr.email!=-1){
+response.cookie('nick',usr.nick);
+}
+response.redirect('/');
+});
+});
+
+app.post("/guardarNickGoogle",function(request,response){
+let email=request.cookies.tempEmail;
+let nick=request.body.nick;
+
+if (!email || !nick){
+response.json({success:false, error:"Datos incompletos"});
+return;
+}
+
+sistema.guardarNickGoogle({"email":email,"nick":nick},function(result){
+if (result.success){
+response.clearCookie('tempEmail');
+response.cookie('nick', nick);
+response.json({success:true, nick:nick});
+}
+else{
+response.json({success:false, error:result.error});
+}
+});
+});
+
+app.post('/loginUsuario',passport.authenticate("local",{failureRedirect:"/fallo",successRedirect: "/ok"})
+);
+
+app.get("/ok",function(request,response){
+	// Agregar usuario a la lista de usuarios activos usando el nick
+	if (request.user && request.user.nick) {
+		sistema.agregarUsuario(request.user.nick);
+	}
+	response.send({nick:request.user.nick})
 });
 
 // Rutas de autenticación con Google
-app.get('/auth/google', function(req, res, next) {
-    try {
-        const strat = passport._strategy && passport._strategy('google');
-        const configuredCallback = strat && (strat._callbackURL || (strat._oauth2 && strat._oauth2._redirectUri)) || '<unknown>';
-        console.log('[auth/google] request host:', req.headers.host);
-        console.log('[auth/google] protocol:', req.protocol);
-        console.log('[auth/google] configured callback URL:', configuredCallback);
-        console.log('[auth/google] strategy options:', strat && strat._oauth2 && {
-            redirectUri: strat._oauth2._redirectUri,
-            clientId: strat._oauth2._clientId
-        });
-    } catch (e) {
-        console.error('Error logging passport strategy:', e);
-    }
-    // proceed with authentication
-    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
-});
+app.get('/auth/google', 
+    passport.authenticate('google', { scope: ['profile', 'email'] })
+);
 
 app.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/' }),
     function(req, res) {
-        console.log('[callback] Autenticación exitosa, procesando usuario...');
-        // Autenticación exitosa - guardar usuario en MongoDB
+        // Autenticación exitosa - verificar si usuario necesita elegir nick
         let email = req.user.emails[0].value;
-        console.log('[callback] Email del usuario:', email);
-        sistema.usuarioGoogle({"email": email}, function(obj) {
-            console.log('[callback] Usuario guardado en MongoDB:', obj);
-            res.cookie('nick', obj.email);
-            res.redirect('/');
+        sistema.verificarUsuarioGoogle({"email": email}, function(obj) {
+            if (obj.necesitaNick) {
+                // Usuario nuevo, necesita elegir nick
+                res.cookie('tempEmail', email, { maxAge: 300000 }); // 5 minutos
+                res.redirect('/?elegirNick=true');
+            } else {
+                // Usuario existente, continuar normalmente
+                res.cookie('nick', obj.nick);
+                sistema.agregarUsuario(obj.nick);
+                res.redirect('/');
+            }
         });
     }
 );
 
 // Ruta para manejar Google One Tap callback usando Passport
 app.post('/oneTap/callback',
-    passport.authenticate('google-one-tap', { failureRedirect: '/fallo' }),
+    passport.authenticate('google-one-tap', { failureRedirect: '/' }),
     function(req, res) {
-        console.log('[oneTap/callback] Autenticación exitosa con Passport One Tap');
-        // Successful authentication, redirect to /good
         res.redirect('/good');
     }
 );
@@ -114,12 +197,19 @@ app.post('/oneTap/callback',
 // Ruta /good para manejar login exitoso de One Tap
 app.get("/good", function(request, response) {
     let email = request.user.emails ? request.user.emails[0].value : request.user.email;
-    console.log('[good] Usuario autenticado:', email);
     if (email) {
-        sistema.usuarioGoogle({"email": email}, function(obj) {
-            console.log('[good] Usuario guardado en MongoDB:', obj);
-            response.cookie('nick', obj.email);
-            response.redirect('/');
+        // Verificar si usuario necesita elegir nick (igual que Google OAuth)
+        sistema.verificarUsuarioGoogle({"email": email}, function(obj) {
+            if (obj.necesitaNick) {
+                // Usuario nuevo, necesita elegir nick
+                response.cookie('tempEmail', email, { maxAge: 300000 }); // 5 minutos
+                response.redirect('/?elegirNick=true');
+            } else {
+                // Usuario existente, continuar normalmente
+                response.cookie('nick', obj.nick);
+                sistema.agregarUsuario(obj.nick);
+                response.redirect('/');
+            }
         });
     } else {
         response.redirect('/');
@@ -128,8 +218,21 @@ app.get("/good", function(request, response) {
 
 // Ruta /fallo para cuando falla la autenticación
 app.get("/fallo", function(request, response) {
-    console.log('[fallo] Autenticación fallida');
-    response.send({nick: "nook"});
+    response.status(401).json({nick: -1, mensaje: "Email o contraseña incorrectos. Asegúrate de haber confirmado tu cuenta."});
+});
+
+app.get("/cerrarSesion",haIniciado,function(request,response){
+	let nick=request.user.email || request.user.nick;
+	request.logout(function(err){
+		if (err) { 
+			console.error("Error al cerrar sesión:", err.message);
+			return response.redirect("/"); 
+		}
+		if (nick){
+			sistema.eliminarUsuario(nick);
+		}
+		response.json({success: true});
+	});
 });
 
 app.get('/logout', function(req, res) {
