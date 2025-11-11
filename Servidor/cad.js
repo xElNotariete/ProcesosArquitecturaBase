@@ -8,7 +8,7 @@ function CAD() {
   // conectar a Mongo Atlas
   this.conectar = async function(callback) {
     const cad = this;
-    const uri = process.env.MONGO_URI || process.env.MONGO_URL || 'mongodb+srv://sns:2121993.Darkfire@procesocluster.efauuxe.mongodb.net/?appName=ProcesoCluster';
+    const uri = process.env.MONGO_URI || process.env.MONGO_URL || 'mongodb+srv://dbuser:<db:password>@procesocluster.efauuxe.mongodb.net/?appName=ProcesoCluster';
     // Opciones para Node.js v24+ (fix SSL/TLS error)
     const client = new mongo(uri, { 
       tlsAllowInvalidCertificates: true,
