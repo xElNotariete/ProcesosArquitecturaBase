@@ -8,8 +8,12 @@ function CAD() {
   // conectar a Mongo Atlas
   this.conectar = async function(callback) {
     const cad = this;
-    const uri = process.env.MONGO_URI || process.env.MONGO_URL || 'mongodb+srv://sns:<db_password>@procesocluster.efauuxe.mongodb.net/?appName=ProcesoCluster';
-    const client = new mongo(uri);
+    const uri = process.env.MONGO_URI || process.env.MONGO_URL || 'mongodb+srv://sns:2121993.Darkfire@procesocluster.efauuxe.mongodb.net/?appName=ProcesoCluster';
+    // Opciones para Node.js v24+ (fix SSL/TLS error)
+    const client = new mongo(uri, { 
+      tlsAllowInvalidCertificates: true,
+      serverSelectionTimeoutMS: 5000
+    });
     try {
       await client.connect();
       const database = client.db('sistema');
@@ -109,17 +113,24 @@ function insertar(coleccion, elemento, callback) {
 
 // función auxiliar para actualizar un documento en una colección
 function actualizar(coleccion, obj, callback) {
-  coleccion.findOneAndUpdate({_id: new ObjectId(obj._id)}, {$set: obj},
-    {upsert: false, returnDocument: "after", projection: {email: 1, nick: 1}},
+  const updateFields = { ...obj };
+  delete updateFields._id; // No actualizar el _id
+  
+  coleccion.findOneAndUpdate(
+    {_id: new ObjectId(obj._id)}, 
+    {$set: updateFields},
+    {upsert: false, returnDocument: "after"},
     function(err, doc) {
       if (err) { 
         console.error("[CAD] Error al actualizar:", err.message);
         throw err; 
       }
       else {
-        callback({email: doc.value.email, nick: doc.value.nick});
+        console.log("[CAD] Usuario actualizado:", doc.value);
+        callback(doc.value);
       }
-    });
+    }
+  );
 }
 
 // función auxiliar para eliminar un documento de una colección

@@ -185,6 +185,13 @@ this.usuarioActivo = function(nick) {
   this.loginUsuario=function(obj,callback){
     this.cad.buscarUsuario({"email":obj.email,"confirmada":true},function(usr){
       if(usr){
+        // Si el usuario no tiene contraseña (usuario de Google), no permitir login local
+        if (!usr.password) {
+          console.log("[loginUsuario] Usuario de Google, no puede hacer login con contraseña");
+          callback({"email":-1, "mensaje": "Usuario registrado con Google. Usa 'Iniciar sesión con Google'"});
+          return;
+        }
+        
         // Comparar la contraseña usando bcrypt
         bcrypt.compare(obj.password, usr.password, function(err, result) {
           if (err) {
@@ -210,15 +217,20 @@ this.usuarioActivo = function(nick) {
   
   this.confirmarUsuario=function(obj,callback){
     let modelo=this;
+    console.log("[modelo] Buscando usuario para confirmar:", obj);
     this.cad.buscarUsuario({"email":obj.email,"confirmada":false,"key":obj.key},function(usr){
+      console.log("[modelo] Usuario encontrado:", usr);
       if (usr){
         usr.confirmada=true;
+        console.log("[modelo] Actualizando usuario con confirmada=true");
         modelo.cad.actualizarUsuario(usr,function(res){
+          console.log("[modelo] Usuario actualizado, resultado:", res);
           callback({"email":res.email, "nick":res.nick});
         })
       }
       else
       {
+        console.log("[modelo] Usuario no encontrado o ya confirmado");
         callback({"email":-1});
       }
     })

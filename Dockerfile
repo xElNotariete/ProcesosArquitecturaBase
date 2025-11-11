@@ -19,6 +19,7 @@ EXPOSE 8080
 # Define variables de entorno
 ENV PORT=8080
 ENV NODE_ENV=production
+ENV APP_URL=https://procesos2526-145905119803.europe-west1.run.app/
 
 # Comando para ejecutar la aplicación
 CMD ["node", "index.js"]

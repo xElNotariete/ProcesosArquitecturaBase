@@ -1,6 +1,13 @@
 const nodemailer = require('nodemailer');
-const url="https://procesos2526-145905119803.europe-west1.run.app/";
-//const url="tu-url-de-despliegue";
+
+// Detectar automáticamente: 
+// 1. Si hay APP_URL en env, úsala
+// 2. Si no, usa localhost:8080
+const url = process.env.APP_URL || "http://localhost:8080";
+// Asegurar que termine con /
+const baseURL = url.endsWith('/') ? url : url + '/';
+
+console.log('[email] URL base configurada:', baseURL);
 
 const transporter = nodemailer.createTransport({
 	service: 'gmail',
@@ -12,11 +19,15 @@ const transporter = nodemailer.createTransport({
 
 //send();
 module.exports.enviarEmail=async function(direccion, key, men) {
+	const confirmURL = `${baseURL}confirmarUsuario/${direccion}/${key}`;
+	console.log('[email] Enviando email a:', direccion);
+	console.log('[email] URL de confirmación:', confirmURL);
+	
 	const result = await transporter.sendMail({
-		from: 'samuelnotario100@gmail.com',
+		from: process.env.EMAIL_USER || 'samuelnotario100@gmail.com',
 		to: direccion,
 		subject: men,
-		text: 'Pulsa aquí para confirmar cuenta: '+url+'confirmarUsuario/'+direccion+'/'+key,
+		text: 'Pulsa aquí para confirmar cuenta: ' + confirmURL,
 		html: `
 		<!DOCTYPE html>
 		<html>
@@ -36,13 +47,15 @@ module.exports.enviarEmail=async function(direccion, key, men) {
 			<div class="container">
 				<h2>Bienvenido a Sistema</h2>
 				<p>Gracias por registrarte. Para activar tu cuenta, haz clic en el siguiente botón:</p>
-				<a href="${url}confirmarUsuario/${direccion}/${key}" class="button" target="_blank" rel="noopener">Confirmar cuenta</a>
+				<a href="${confirmURL}" class="button" target="_blank" rel="noopener">Confirmar cuenta</a>
 				<p>O copia y pega este enlace en tu navegador donde ya tienes abierta la aplicación:</p>
-				<p class="link">${url}confirmarUsuario/${direccion}/${key}</p>
+				<p class="link">${confirmURL}</p>
 				<p style="margin-top: 30px; font-size: 12px; color: #999;">Si no solicitaste este registro, ignora este correo.</p>
 			</div>
 		</body>
 		</html>
 		`
 	});
+	
+	console.log('[email] Email enviado correctamente');
 }

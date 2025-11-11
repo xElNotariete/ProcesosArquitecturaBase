@@ -142,6 +142,15 @@ sistema.guardarNickGoogle({"email":email,"nick":nick},function(result){
 if (result.success){
 response.clearCookie('tempEmail');
 response.cookie('nick', nick);
+
+// Establecer sesión de Passport para usuarios de Google
+request.login({email: email, nick: nick, googleUser: true}, function(err) {
+if (err) {
+console.error('[guardarNickGoogle] Error al establecer sesión:', err);
+}
+console.log('[guardarNickGoogle] Sesión establecida para:', nick);
+});
+
 response.json({success:true, nick:nick});
 }
 else{
@@ -186,13 +195,54 @@ app.get('/auth/google/callback',
     }
 );
 
-// Ruta para manejar Google One Tap callback usando Passport
-app.post('/oneTap/callback',
-    passport.authenticate('google-one-tap', { failureRedirect: '/' }),
-    function(req, res) {
-        res.redirect('/good');
+// Ruta para manejar Google One Tap callback
+app.post('/oneTap/callback', async function(req, res) {
+    try {
+        console.log('[OneTap] ===== INICIO CALLBACK =====');
+        console.log('[OneTap] Body recibido:', req.body);
+        const token = req.body.credential;
+        
+        if (!token) {
+            console.log('[OneTap] ERROR: No se recibió token');
+            return res.status(400).json({ error: 'No token provided' });
+        }
+        
+        console.log('[OneTap] Verificando token con Google...');
+        // Verificar el token con Google
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+        
+        const payload = ticket.getPayload();
+        console.log('[OneTap] ✓ Token verificado exitosamente');
+        console.log('[OneTap] Email:', payload.email);
+        console.log('[OneTap] Nombre:', payload.name);
+        
+        // Verificar si el usuario existe o necesita registrarse
+        sistema.verificarUsuarioGoogle({"email": payload.email}, function(obj) {
+            console.log('[OneTap] Resultado verificación:', obj);
+            
+            if (obj.necesitaNick) {
+                // Usuario nuevo, necesita elegir nick
+                console.log('[OneTap] Usuario nuevo, redirigiendo a elegir nick');
+                res.cookie('tempEmail', payload.email, { maxAge: 300000 }); // 5 minutos
+                res.redirect('/?elegirNick=true');
+            } else {
+                // Usuario existente, continuar normalmente
+                console.log('[OneTap] Usuario existente:', obj.nick);
+                res.cookie('nick', obj.nick);
+                sistema.agregarUsuario(obj.nick);
+                res.redirect('/');
+            }
+        });
+        
+    } catch (error) {
+        console.error('[OneTap] ===== ERROR =====');
+        console.error('[OneTap] Error al verificar token:', error.message);
+        res.status(401).json({ error: 'Invalid token' });
     }
-);
+});
 
 // Ruta /good para manejar login exitoso de One Tap
 app.get("/good", function(request, response) {

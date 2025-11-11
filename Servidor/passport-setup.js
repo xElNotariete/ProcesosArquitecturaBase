@@ -6,6 +6,10 @@ const modelo = require("./modelo.js");
 
 let sistema = new modelo.Sistema();
 
+// Detectar URL base automáticamente
+const baseURL = process.env.APP_URL || "http://localhost:8080/";
+console.log('[passport] URL base configurada:', baseURL);
+
 passport.serializeUser(function(user, done) {
  done(null, user);
 });
@@ -18,7 +22,7 @@ passport.use(new GoogleStrategy({
 	// Use environment variables so secrets are not stored in the repository
 	clientID: process.env.GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID',
 	clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'YOUR_CLIENT_SECRET',
-	callbackURL: 'https://procesos2526-145905119803.europe-west1.run.app/auth/google/callback',
+	callbackURL: `${baseURL}auth/google/callback`,
 	proxy: true
 },
 function(accessToken, refreshToken, profile, done) {

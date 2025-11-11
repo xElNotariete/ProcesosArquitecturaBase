@@ -48,11 +48,16 @@ cd ProcesosArquitecturaBase
 npm install
 
 # Configurar variables de entorno
-# Crear archivo .env con:
-# MONGO_URI=tu_uri_de_mongodb
-# GOOGLE_CLIENT_ID=tu_client_id
-# GOOGLE_CLIENT_SECRET=tu_client_secret
-# PORT=8080
+# Copia el archivo .env.example a .env
+cp .env.example .env
+
+# Edita .env con tus credenciales reales:
+# - GOOGLE_CLIENT_ID
+# - GOOGLE_CLIENT_SECRET
+# - MONGO_URI
+# - EMAIL_USER
+# - EMAIL_PASS
+# - APP_URL (opcional, por defecto http://localhost:8080)
 
 # Iniciar servidor
 npm start
