@@ -103,22 +103,42 @@ function ClienteRest(){
 		});
 	}
 
-	this.registrarUsuario=function(nick, email, password, callback){
-		$.ajax({
-			type:'POST',
-			url:'/registrarUsuario',
-			data: JSON.stringify({"nick":nick,"email":email,"password":password}),
-			success:function(data){
-				if (callback) callback(data);
-			},
-			error:function(xhr, textStatus, errorThrown){
-				console.log("Status: " + textStatus);
-				console.log("Error: " + errorThrown);
-				if (callback) callback({error: "Error de conexión"});
-			},
-			contentType:'application/json'
-		});
-	}
+	this.registrarUsuario = function(nick, email, password, callback) {
+    $.ajax({
+        type: 'POST',
+        url: '/registrarUsuario',
+        data: JSON.stringify({
+            "nick": nick,
+            "email": email,
+            "password": password
+        }),
+        success: function(data) {
+            if (data.nick) { 
+                if (callback) callback(data);
+            } 
+            else {
+                console.log("Hay un usuario registrado con ese email");
+                cw.mostrarMensajeLogin("Hay un usuario registrado con ese email");
+					console.log('[ClienteRest] Intentando mostrar modal de error (registrarUsuario)');
+					if (typeof cw !== 'undefined' && cw && typeof cw.mostrarModal === 'function') {
+						cw.mostrarModal("No se ha podido registrar el usuario");
+					} else {
+						console.warn('[ClienteRest] cw.mostrarModal no disponible, usando alert fallback');
+						alert('No se ha podido registrar el usuario');
+					}
+            }
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            console.log("Status: " + textStatus);
+            console.log("Error: " + errorThrown);
+            if (callback) callback({
+                error: "Error de conexión"
+            });
+        },
+        contentType: 'application/json'
+    });
+}
+	
 
 	this.loginUsuario=function(email, password, callback){
 		$.ajax({
