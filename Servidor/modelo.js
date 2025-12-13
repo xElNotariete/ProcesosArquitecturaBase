@@ -4,6 +4,7 @@ const correo = require("./email.js");
 
 function Sistema(){
  this.usuarios={};
+ this.partidas = {};
 
  this.cad = new datos.CAD();
  
@@ -62,6 +63,7 @@ this.usuarioActivo = function(nick) {
 
  
   this.usuarioGoogle = function(usr, callback) {
+    const modelo = this;
     // Asegurar que los usuarios provenientes de Google queden marcados como confirmados
     try {
       if (!usr) usr = {};
@@ -73,6 +75,11 @@ this.usuarioActivo = function(nick) {
       // no bloquear el flujo por un fallo menor en el objeto
     }
     this.cad.buscarOCrearUsuario(usr, function(obj) {
+      // Agregar usuario a memoria
+      if (obj && obj.nick && !modelo.usuarios[obj.nick]) {
+        modelo.usuarios[obj.nick] = obj;
+        console.log("[usuarioGoogle] Usuario agregado a memoria:", obj.nick);
+      }
       callback(obj);
     });
   };
@@ -100,6 +107,12 @@ this.usuarioActivo = function(nick) {
       return;
     }
     
+    // Validar contraseña
+    if (!obj.password || obj.password.length < 6) {
+      callback({success: false, error: "Contraseña inválida"});
+      return;
+    }
+    
     // Verificar que el nick no esté en uso
     this.cad.buscarUsuario({"nick": obj.nick}, function(usrNick) {
       if (usrNick) {
@@ -107,27 +120,37 @@ this.usuarioActivo = function(nick) {
         return;
       }
       
-      // Buscar usuario por email y actualizar con nick
-      modelo.cad.buscarUsuario({"email": obj.email}, function(usuario) {
-        if (usuario) {
-          // Usuario existe, actualizar nick
-          usuario.nick = obj.nick;
-          modelo.cad.actualizarUsuario(usuario, function(res) {
-            modelo.agregarUsuario(obj.nick);
-            callback({success: true, nick: obj.nick});
-          });
-        } else {
-          // Usuario no existe, crear con nick
-          let nuevoUsuario = {
-            email: obj.email,
-            nick: obj.nick,
-            confirmada: true
-          };
-          modelo.cad.insertarUsuario(nuevoUsuario, function(res) {
-            modelo.agregarUsuario(obj.nick);
-            callback({success: true, nick: obj.nick});
-          });
+      // Encriptar contraseña
+      bcrypt.hash(obj.password, 10, function(err, hash) {
+        if (err) {
+          callback({success: false, error: "Error al encriptar contraseña"});
+          return;
         }
+        
+        // Buscar usuario por email y actualizar con nick y contraseña
+        modelo.cad.buscarUsuario({"email": obj.email}, function(usuario) {
+          if (usuario) {
+            // Usuario existe, actualizar nick y contraseña
+            usuario.nick = obj.nick;
+            usuario.password = hash;
+            modelo.cad.actualizarUsuario(usuario, function(res) {
+              modelo.agregarUsuario(obj.nick);
+              callback({success: true, nick: obj.nick});
+            });
+          } else {
+            // Usuario no existe, crear con nick y contraseña
+            let nuevoUsuario = {
+              email: obj.email,
+              nick: obj.nick,
+              password: hash,
+              confirmada: true
+            };
+            modelo.cad.insertarUsuario(nuevoUsuario, function(res) {
+              modelo.agregarUsuario(obj.nick);
+              callback({success: true, nick: obj.nick});
+            });
+          }
+        });
       });
     });
   };
@@ -183,6 +206,7 @@ this.usuarioActivo = function(nick) {
 
 
   this.loginUsuario=function(obj,callback){
+    const modelo = this;
     this.cad.buscarUsuario({"email":obj.email,"confirmada":true},function(usr){
       if(usr){
         // Si el usuario no tiene contraseña (usuario de Google), no permitir login local
@@ -200,6 +224,11 @@ this.usuarioActivo = function(nick) {
             return;
           }
           if(result){
+            // Agregar usuario a memoria
+            if (!modelo.usuarios[usr.nick]) {
+              modelo.usuarios[usr.nick] = usr;
+              console.log("[loginUsuario] Usuario agregado a memoria:", usr.nick);
+            }
             callback(usr);
           }
           else{
@@ -236,6 +265,73 @@ this.usuarioActivo = function(nick) {
     })
   }
 
+  // ------------------ Gestión de partidas ------------------
+  this.obtenerCodigo = function(){
+    const rnd = Math.floor(Math.random()*9000)+1000;
+    return Date.now().toString(36) + '-' + rnd.toString(36);
+  };
+
+  this.obtenerUsuarioPorEmail = function(email){
+    if (!email) return null;
+    const lista = Object.values(this.usuarios);
+    for (let i=0;i<lista.length;i++){
+      const u = lista[i];
+      if (u && u.email && u.email === email) return u;
+    }
+    return null;
+  };
+
+  this.crearPartida = function(email){
+    const modelo = this;
+    const usr = this.obtenerUsuarioPorEmail(email);
+    if (!usr) return {ok:false, error:'Usuario no encontrado'};
+    const codigo = this.obtenerCodigo();
+    const p = new Partida(codigo);
+    const jugadorId = usr.nick || usr.email;
+    p.jugadores.push(jugadorId);
+    this.partidas[codigo] = p;
+    return {ok:true, codigo:codigo, partida:p};
+  };
+
+  this.unirAPartida = function(email, codigo){
+    const modelo = this;
+    const usr = this.obtenerUsuarioPorEmail(email);
+    if (!usr) return {ok:false, error:'Usuario no encontrado'};
+    const p = this.partidas[codigo];
+    if (!p) return {ok:false, error:'Partida no encontrada'};
+    const jugadorId = usr.nick || usr.email;
+    if (p.jugadores.indexOf(jugadorId) !== -1) return {ok:true, mensaje:'Jugador ya en la partida', partida:p};
+    if (p.jugadores.length >= p.maxJug) return {ok:false, error:'Partida llena'};
+    p.jugadores.push(jugadorId);
+    return {ok:true, partida:p};
+  };
+
+  this.obtenerPartidasDisponibles = function(){
+    let lista = [];
+    for(var codigo in this.partidas){
+      const partida = this.partidas[codigo];
+      if (partida.jugadores.length < partida.maxJug){
+        const creadorId = partida.jugadores[0];
+        let emailCreador = creadorId;
+        const usr = this.usuarios[creadorId];
+        if (usr && usr.email) emailCreador = usr.email;
+        const codigoPartida = partida.codigo;
+        const obj = {
+          codigo: codigoPartida,
+          emailCreador: emailCreador
+        };
+        lista.push(obj);
+      }
+    }
+    return lista;
+  };
+
+}
+
+function Partida(codigo){
+  this.codigo = codigo;
+  this.jugadores = [];
+  this.maxJug = 2;
 }
 
 function Usuario(nick){

@@ -7,7 +7,11 @@ const modelo = require("./modelo.js");
 let sistema = new modelo.Sistema();
 
 // Detectar URL base automáticamente
-const baseURL = process.env.APP_URL || "http://localhost:8080/";
+let baseURL = process.env.APP_URL || "http://localhost:8080";
+// Asegurar que termina con /
+if (!baseURL.endsWith('/')) {
+	baseURL += '/';
+}
 console.log('[passport] URL base configurada:', baseURL);
 
 passport.serializeUser(function(user, done) {

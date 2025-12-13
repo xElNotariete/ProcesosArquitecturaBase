@@ -182,12 +182,22 @@ function ControlWeb() {
   };
 
   this.comprobarSesion = function () {
+    console.log("[comprobarSesion] Todas las cookies:", document.cookie);
     let nick = this.getCookie("nick");
+    console.log("[comprobarSesion] Nick:", nick);
     if (nick) {
       // Usuario logueado - mostrar dashboard
       $("#landingPage").hide();
       $("#dashboard").show();
       $("#btnSalir").show();
+
+      // Recuperar email de la cookie si existe
+      let email = this.getCookie("email");
+      console.log("[comprobarSesion] Email de cookie:", email);
+      if (email) {
+        ws.email = email;
+        console.log("[comprobarSesion] Email asignado a ws:", ws.email);
+      }
 
       // Mostrar mensaje de bienvenida
       $("#welcomeMessage").html(
@@ -242,6 +252,8 @@ function ControlWeb() {
         rest.loginUsuario(email, password, function (data) {
           if (data && data.nick) {
             document.cookie = "nick=" + data.nick + "; path=/";
+            document.cookie = "email=" + data.email + "; path=/";
+            ws.email = data.email;
             $("#mensajeLogin")
               .removeClass("alert-danger")
               .addClass("alert-success")
@@ -334,8 +346,9 @@ function ControlWeb() {
 
   this.salir = function () {
     //localStorage.removeItem("nick");
-    // Eliminar la cookie
+    // Eliminar las cookies
     document.cookie = "nick=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     rest.cerrarSesion();
     location.reload();
   };
@@ -433,6 +446,112 @@ function ControlWeb() {
     let cadena = "<div id='msg'>" + m + "</div>";
     $("#mBody").html(cadena);
     $("#miModal").modal('show');
+  };
+
+  this.mostrarCrearPartida = function () {
+    const cw = this;
+    let cadena = '<div id="mCP" class="card shadow-sm">';
+    cadena += '<div class="card-body">';
+    cadena += '<h5 class="card-title"><i class="fas fa-plus-circle"></i> Crear Nueva Partida</h5>';
+    cadena += '<p class="card-text text-muted">Crea una partida y espera a que otro jugador se una</p>';
+    cadena += '<button id="btnCrearPartida" type="button" class="btn btn-primary btn-block">';
+    cadena += '<i class="fas fa-gamepad"></i> Crear Partida</button>';
+    cadena += '<div id="esperandoRival" style="display:none;"></div>';
+    cadena += '<div id="infoPartida" class="mt-3"></div>';
+    cadena += '</div></div>';
+    $("#contenido").append(cadena);
+    $("#contenido").show();
+
+    $("#btnCrearPartida").on("click", function () {
+      ws.crearPartida();
+      $("#btnCrearPartida").prop("disabled", true);
+      cw.mostrarEsperandoRival();
+    });
+  };
+
+  this.mostrarEsperandoRival = function () {
+    let cadena = '<div class="text-center mt-4">';
+    cadena += '<div class="spinner-border text-primary" role="status">';
+    cadena += '<span class="sr-only">Cargando...</span>';
+    cadena += '</div>';
+    cadena += '<h5 class="mt-3 text-primary">Esperando rival...</h5>';
+    cadena += '<p class="text-muted">Código de partida: <strong id="codigoPartida"></strong></p>';
+    cadena += '</div>';
+    $("#esperandoRival").html(cadena);
+    $("#esperandoRival").show();
+    
+    // Actualizar el código cuando esté disponible
+    if (ws.codigo) {
+      $("#codigoPartida").text(ws.codigo);
+    } else {
+      setTimeout(function() {
+        if (ws.codigo) {
+          $("#codigoPartida").text(ws.codigo);
+        }
+      }, 500);
+    }
+  };
+
+  this.mostrarListaPartidas = function (listaPartidas) {
+    let cadena = '<div id="mLP" class="card shadow-sm mt-3">';
+    cadena += '<div class="card-body">';
+    cadena += '<h5 class="card-title"><i class="fas fa-list"></i> Partidas Disponibles</h5>';
+    cadena += '<p class="card-text text-muted">Selecciona una partida para unirte</p>';
+    cadena += '<div id="tablaPartidas"></div>';
+    cadena += '</div></div>';
+    $("#contenido").append(cadena);
+    $("#contenido").show();
+    
+    this.actualizarListaPartidas(listaPartidas);
+  };
+
+  this.actualizarListaPartidas = function (listaPartidas) {
+    const cw = this;
+    let cadena = "";
+    
+    if (!listaPartidas || Object.keys(listaPartidas).length === 0) {
+      cadena = '<div class="alert alert-info">';
+      cadena += '<i class="fas fa-info-circle"></i> No hay partidas disponibles en este momento';
+      cadena += '</div>';
+    } else {
+      cadena = '<div class="table-responsive">';
+      cadena += '<table class="table table-hover table-striped">';
+      cadena += '<thead class="thead-dark">';
+      cadena += '<tr>';
+      cadena += '<th>Código</th>';
+      cadena += '<th>Jugador</th>';
+      cadena += '<th>Acción</th>';
+      cadena += '</tr>';
+      cadena += '</thead>';
+      cadena += '<tbody>';
+      
+      for (let codigo in listaPartidas) {
+        let partida = listaPartidas[codigo];
+        cadena += '<tr>';
+        cadena += '<td><span class="badge badge-primary">' + codigo + '</span></td>';
+        cadena += '<td>' + (partida.owner || 'Usuario') + '</td>';
+        cadena += '<td>';
+        cadena += '<button class="btn btn-success btn-sm btnUnirse" data-codigo="' + codigo + '">';
+        cadena += '<i class="fas fa-sign-in-alt"></i> Unirse';
+        cadena += '</button>';
+        cadena += '</td>';
+        cadena += '</tr>';
+      }
+      
+      cadena += '</tbody>';
+      cadena += '</table>';
+      cadena += '</div>';
+    }
+    
+    $("#tablaPartidas").html(cadena);
+    
+    // Asignar eventos a los botones de unirse
+    $(".btnUnirse").on("click", function () {
+      let codigo = $(this).data("codigo");
+      ws.unirAPartida(codigo);
+      cw.mostrarMensaje("Uniéndose a la partida " + codigo + "...");
+      $(this).prop("disabled", true);
+    });
   };
   
 }

@@ -2,6 +2,8 @@ const fs=require("fs");
 require('dotenv').config();
 const express = require('express');
 const app = express();
+const httpServer = require('http').Server(app);
+const { Server } = require("socket.io");
 const cors = require('cors');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
@@ -11,6 +13,7 @@ const { OAuth2Client } = require('google-auth-library');
 const LocalStrategy = require('passport-local').Strategy;
 require("./Servidor/passport-setup.js");
 const modelo = require("./Servidor/modelo.js");
+const moduloWS = require("./Servidor/servidorWS.js");
 const PORT = process.env.PORT || 8080;
 
 // Cliente OAuth2 para verificar tokens de Google One Tap
@@ -132,16 +135,21 @@ response.redirect('/');
 app.post("/guardarNickGoogle",function(request,response){
 let email=request.cookies.tempEmail;
 let nick=request.body.nick;
+let password=request.body.password;
 
-if (!email || !nick){
+if (!email || !nick || !password){
 response.json({success:false, error:"Datos incompletos"});
 return;
 }
 
-sistema.guardarNickGoogle({"email":email,"nick":nick},function(result){
+sistema.guardarNickGoogle({"email":email,"nick":nick,"password":password},function(result){
 if (result.success){
 response.clearCookie('tempEmail');
-response.cookie('nick', nick);
+response.cookie('nick', nick, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 días
+response.cookie('email', email, { path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 }); // 7 días
+
+// Agregar usuario a memoria
+sistema.agregarUsuario(nick);
 
 // Establecer sesión de Passport para usuarios de Google
 request.login({email: email, nick: nick, googleUser: true}, function(err) {
@@ -149,9 +157,10 @@ if (err) {
 console.error('[guardarNickGoogle] Error al establecer sesión:', err);
 }
 console.log('[guardarNickGoogle] Sesión establecida para:', nick);
+console.log('[guardarNickGoogle] Cookies establecidas: nick=' + nick + ', email=' + email);
 });
 
-response.json({success:true, nick:nick});
+response.json({success:true, nick:nick, email:email});
 }
 else{
 response.json({success:false, error:result.error});
@@ -167,7 +176,7 @@ app.get("/ok",function(request,response){
 	if (request.user && request.user.nick) {
 		sistema.agregarUsuario(request.user.nick);
 	}
-	response.send({nick:request.user.nick})
+	response.send({nick:request.user.nick, email:request.user.email})
 });
 
 // Rutas de autenticación con Google
@@ -188,6 +197,7 @@ app.get('/auth/google/callback',
             } else {
                 // Usuario existente, continuar normalmente
                 res.cookie('nick', obj.nick);
+                res.cookie('email', obj.email);
                 sistema.agregarUsuario(obj.nick);
                 res.redirect('/');
             }
@@ -232,6 +242,7 @@ app.post('/oneTap/callback', async function(req, res) {
                 // Usuario existente, continuar normalmente
                 console.log('[OneTap] Usuario existente:', obj.nick);
                 res.cookie('nick', obj.nick);
+                res.cookie('email', obj.email);
                 sistema.agregarUsuario(obj.nick);
                 res.redirect('/');
             }
@@ -257,6 +268,7 @@ app.get("/good", function(request, response) {
             } else {
                 // Usuario existente, continuar normalmente
                 response.cookie('nick', obj.nick);
+                response.cookie('email', obj.email);
                 sistema.agregarUsuario(obj.nick);
                 response.redirect('/');
             }
@@ -295,7 +307,14 @@ app.get('/logout', function(req, res) {
 // Servir archivos estáticos desde la carpeta Cliente (al final para que no interfiera con las rutas API)
 app.use(express.static(__dirname + "/Cliente"));
 
-app.listen(PORT, () => {
-console.log(`App está escuchando en el puerto ${PORT}`);
-console.log('Ctrl+C para salir');
+// Crear instancias de WebSocket Server y Socket.IO
+let ws = new moduloWS.ServidorWS();
+let io = new Server();
+
+// Lanzar servidores
+httpServer.listen(PORT, () => {
+	console.log(`App está escuchando en el puerto ${PORT}`);
+	console.log('Ctrl+C para salir');
 });
+io.listen(httpServer);
+ws.lanzarServidor(io, sistema);

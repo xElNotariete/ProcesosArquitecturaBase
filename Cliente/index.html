@@ -9,11 +9,12 @@
  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+ <parameter name="script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
  <script src="https://accounts.google.com/gsi/client" async defer></script>
- <script src="modelo.js"></script>
+ <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
  <script src="clienteRest.js"></script>
  <script src="controlWeb.js"></script>
+ <script src="clienteWS.js"></script>
  <style>
   body {
    background: linear-gradient(135deg, #4a90e2 0%, #67b5e8 50%, #85c9f2 100%) !important;
@@ -176,8 +177,13 @@
  <script>
  $(document).ready(function(){
    const urlParams = new URLSearchParams(window.location.search);
-   if (urlParams.get('elegirNick') === 'true') {
+   // Solo mostrar modal si no tiene cookie de nick
+   const nickCookie = document.cookie.split('; ').find(row => row.startsWith('nick='));
+   if (urlParams.get('elegirNick') === 'true' && !nickCookie) {
      $('#modalNickGoogle').modal('show');
+   } else if (urlParams.get('elegirNick') === 'true' && nickCookie) {
+     // Si tiene cookie pero está la URL con elegirNick, limpiar la URL
+     window.history.replaceState({}, document.title, '/');
    }
  });
  </script>
@@ -375,79 +381,38 @@ console.log('[OneTap Client] Función handleCredentialResponse definida:', typeo
 
   <!-- Header section -->
   <div class="row mb-4">
-   <div class="col-12">
-    <h2 class="text-dark mb-1">Panel de Control</h2>
-    <p class="text-muted">Gestione usuarios de forma eficiente con nuestras herramientas</p>
+   <div class="col-12 text-center">
+    <h2 class="text-dark mb-1"><i class="fas fa-gamepad"></i> Sala de Juegos</h2>
+    <p class="text-muted">Crea una partida o únete a una existente para comenzar a jugar</p>
    </div>
   </div>
 
   <!-- Cards para cada función -->
-  <div class="row">
-  <!-- Agregar Usuario -->
-  <div class="col-md-6 col-lg-4 mb-4">
-   <div class="card h-100 shadow-sm">
-    <div class="card-body">
-     <h5 class="card-title">Agregar Usuario</h5>
-     <p class="card-text text-muted small">Registre un nuevo usuario en el sistema</p>
-     <button type="button" class="btn btn-outline-dark btn-sm" onclick="mostrarFuncion('agregarUsuario', this)">
-      Mostrar
+  <div class="row justify-content-center">
+  <!-- Crear Partida -->
+  <div class="col-md-6 col-lg-5 mb-4">
+   <div class="card h-100 shadow border-success">
+    <div class="card-body text-center">
+     <h5 class="card-title"><i class="fas fa-gamepad text-success"></i> Crear Partida</h5>
+     <p class="card-text text-muted small">Crea una nueva partida y espera un rival</p>
+     <button type="button" class="btn btn-success btn-block" onclick="mostrarFuncion('crearPartida', this)">
+      <i class="fas fa-plus-circle"></i> Crear Nueva Partida
      </button>
-     <div id="result-agregarUsuario" class="mt-3"></div>
+     <div id="result-crearPartida" class="mt-3"></div>
     </div>
    </div>
   </div>
 
-  
-  <div class="col-md-6 col-lg-4 mb-4">
-   <div class="card h-100 shadow-sm">
-    <div class="card-body">
-     <h5 class="card-title">Ver Usuarios</h5>
-     <p class="card-text text-muted small">Consulte la lista completa de usuarios</p>
-     <button type="button" class="btn btn-outline-dark btn-sm" onclick="mostrarFuncion('obtenerUsuarios', this)">
-      Consultar
+  <!-- Unirse a Partida -->
+  <div class="col-md-6 col-lg-5 mb-4">
+   <div class="card h-100 shadow border-info">
+    <div class="card-body text-center">
+     <h5 class="card-title"><i class="fas fa-users text-info"></i> Unirse a Partida</h5>
+     <p class="card-text text-muted small">Ve las partidas disponibles y únete a una</p>
+     <button type="button" class="btn btn-info btn-block" onclick="mostrarFuncion('unirsePartida', this)">
+      <i class="fas fa-list"></i> Ver Partidas Disponibles
      </button>
-     <div id="result-obtenerUsuarios" class="mt-3"></div>
-    </div>
-   </div>
-  </div>
-
-  <!-- Contar Usuarios -->
-  <div class="col-md-6 col-lg-4 mb-4">
-   <div class="card h-100 shadow-sm">
-    <div class="card-body">
-     <h5 class="card-title">Total Usuarios</h5>
-     <p class="card-text text-muted small">Obtenga el número total de usuarios registrados</p>
-     <button type="button" class="btn btn-outline-dark btn-sm" onclick="mostrarFuncion('numeroUsuarios', this)">
-      Contar
-     </button>
-     <div id="result-numeroUsuarios" class="mt-3"></div>
-    </div>
-   </div>
-  </div>
-
-  <div class="col-md-6 col-lg-4 mb-4">
-   <div class="card h-100 shadow-sm">
-    <div class="card-body">
-     <h5 class="card-title">Verificar Usuario</h5>
-     <p class="card-text text-muted small">Compruebe si un usuario está activo</p>
-     <button type="button" class="btn btn-outline-dark btn-sm" onclick="mostrarFuncion('usuarioActivo', this)">
-      Verificar
-     </button>
-     <div id="result-usuarioActivo" class="mt-3"></div>
-    </div>
-   </div>
-  </div>
-
-  
-  <div class="col-md-6 col-lg-4 mb-4">
-   <div class="card h-100 shadow-sm">
-    <div class="card-body">
-     <h5 class="card-title">Eliminar Usuario</h5>
-     <p class="card-text text-muted small">Elimine un usuario del sistema</p>
-     <button type="button" class="btn btn-outline-dark btn-sm" onclick="mostrarFuncion('eliminarUsuario', this)">
-      Eliminar
-     </button>
-     <div id="result-eliminarUsuario" class="mt-3"></div>
+     <div id="result-unirsePartida" class="mt-3"></div>
     </div>
    </div>
   </div>
@@ -469,12 +434,17 @@ console.log('[OneTap Client] Función handleCredentialResponse definida:', typeo
     <h5 class="modal-title"><i class="fas fa-user-tag"></i> Elige tu Nick</h5>
    </div>
    <div class="modal-body">
-    <p>Para completar tu registro con Google, por favor elige un nick único:</p>
+    <p>Para completar tu registro con Google, por favor elige un nick y crea una contraseña:</p>
     <div id="mensajeNickGoogle" class="alert" style="display: none;"></div>
     <div class="form-group">
      <label for="nickGoogle">Nick:</label>
      <input type="text" class="form-control" id="nickGoogle" placeholder="Tu nick único">
      <small class="form-text text-muted">3-20 caracteres: letras, números y guiones bajos</small>
+    </div>
+    <div class="form-group">
+     <label for="passwordGoogle">Contraseña:</label>
+     <input type="password" class="form-control" id="passwordGoogle" placeholder="Crea una contraseña">
+     <small class="form-text text-muted">Mínimo 6 caracteres</small>
     </div>
    </div>
    <div class="modal-footer">
@@ -488,6 +458,7 @@ console.log('[OneTap Client] Función handleCredentialResponse definida:', typeo
 <script>
 rest=new ClienteRest();
 cw=new ControlWeb();
+ws=new ClienteWS();
 
 // Inicializar Google Sign-In
 window.onload = function() {
@@ -510,155 +481,77 @@ function mostrarFuncion(funcion, boton) {
     $(boton).text('Cargando...').prop('disabled', true);
     
     switch(funcion) {
-        case 'agregarUsuario':
-            mostrarAgregarUsuarioEnCard(resultDiv, boton, originalText);
+        case 'crearPartida':
+            mostrarCrearPartidaEnCard(resultDiv, boton, originalText);
             break;
-        case 'obtenerUsuarios':
-            mostrarObtenerUsuariosEnCard(resultDiv, boton, originalText);
-            break;
-        case 'numeroUsuarios':
-            mostrarNumeroUsuariosEnCard(resultDiv, boton, originalText);
-            break;
-        case 'usuarioActivo':
-            mostrarUsuarioActivoEnCard(resultDiv, boton, originalText);
-            break;
-        case 'eliminarUsuario':
-            mostrarEliminarUsuarioEnCard(resultDiv, boton, originalText);
+        case 'unirsePartida':
+            mostrarUnirsePartidaEnCard(resultDiv, boton, originalText);
             break;
     }
 }
 
-function mostrarAgregarUsuarioEnCard(resultDiv, boton, originalText) {
-    const form = `
+function mostrarCrearPartidaEnCard(resultDiv, boton, originalText) {
+    const botonHtml = `
         <div class="border-top pt-3">
-            <div class="form-group mb-2">
-                <input type="text" class="form-control form-control-sm" id="nickAgregar" placeholder="Ingrese el nick">
-            </div>
-            <button class="btn btn-dark btn-sm btn-block" onclick="ejecutarAgregarUsuario()">Agregar</button>
+            <button class="btn btn-success btn-sm btn-block" onclick="ejecutarCrearPartida()">
+                <i class="fas fa-plus-circle"></i> Crear Partida
+            </button>
+            <div id="estadoPartida" class="mt-3"></div>
         </div>
     `;
-    resultDiv.html(form);
+    resultDiv.html(botonHtml);
     $(boton).text(originalText).prop('disabled', false);
 }
 
-function mostrarObtenerUsuariosEnCard(resultDiv, boton, originalText) {
-    $.ajax({
-        type:'GET',
-        url:'/obtenerUsuarios',
-        success:function(data){
-            let usuarios = '<div class="border-top pt-3"><small class="text-muted">Usuarios registrados:</small><div class="mt-2">';
-            const userList = Object.keys(data);
-            if(userList.length === 0) {
-                usuarios += '<span class="badge badge-light">No hay usuarios</span>';
-            } else {
-                userList.forEach(nick => {
-                    usuarios += `<span class="badge badge-secondary mr-1 mb-1">${nick}</span>`;
-                });
-            }
-            usuarios += '</div></div>';
-            resultDiv.html(usuarios);
-            $(boton).text(originalText).prop('disabled', false);
-        },
-        error:function(){
-            resultDiv.html('<div class="border-top pt-3"><small class="text-danger">Error al obtener usuarios</small></div>');
-            $(boton).text(originalText).prop('disabled', false);
-        }
-    });
-}
-
-function mostrarNumeroUsuariosEnCard(resultDiv, boton, originalText) {
-    $.ajax({
-        type:'GET',
-        url:'/numeroUsuarios',
-        success:function(data){
-            resultDiv.html(`
-                <div class="border-top pt-3">
-                    <div class="text-center">
-                        <h4 class="text-dark mb-0">${data.num}</h4>
-                        <small class="text-muted">usuarios registrados</small>
+function mostrarUnirsePartidaEnCard(resultDiv, boton, originalText) {
+    ws.obtenerPartidasDisponibles();
+    
+    const contenido = `
+        <div class="border-top pt-3">
+            <button class="btn btn-info btn-sm btn-block mb-2" onclick="ws.obtenerPartidasDisponibles()">
+                <i class="fas fa-sync-alt"></i> Actualizar Lista
+            </button>
+            <div id="listaPartidasCard" class="mt-2">
+                <div class="text-center text-muted">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="sr-only">Cargando...</span>
                     </div>
+                    <small class="d-block mt-2">Cargando partidas...</small>
                 </div>
-            `);
-            $(boton).text(originalText).prop('disabled', false);
-        },
-        error:function(){
-            resultDiv.html('<div class="border-top pt-3"><small class="text-danger">Error al contar usuarios</small></div>');
-            $(boton).text(originalText).prop('disabled', false);
+            </div>
+        </div>
+    `;
+    resultDiv.html(contenido);
+    $(boton).text(originalText).prop('disabled', false);
+}
+
+function ejecutarCrearPartida() {
+    ws.crearPartida();
+    $('#estadoPartida').html(`
+        <div class="text-center">
+            <div class="spinner-border text-success spinner-border-sm" role="status">
+                <span class="sr-only">Cargando...</span>
+            </div>
+            <p class="mt-2 mb-1"><small class="text-success"><strong>Esperando rival...</strong></small></p>
+            <p class="mb-0"><small class="text-muted">Código: <span id="codigoPartidaCard" class="badge badge-primary"></span></small></p>
+        </div>
+    `);
+    
+    // Actualizar el código cuando esté disponible
+    setTimeout(function() {
+        if (ws.codigo) {
+            $('#codigoPartidaCard').text(ws.codigo);
         }
-    });
+    }, 500);
 }
 
-function mostrarUsuarioActivoEnCard(resultDiv, boton, originalText) {
-    const form = `
-        <div class="border-top pt-3">
-            <div class="form-group mb-2">
-                <input type="text" class="form-control form-control-sm" id="nickVerificar" placeholder="Ingrese el nick a verificar">
-            </div>
-            <button class="btn btn-dark btn-sm btn-block" onclick="ejecutarVerificarUsuario()">Verificar</button>
-            <div id="resultadoVerificar" class="mt-2"></div>
+function ejecutarUnirsePartida(codigo) {
+    ws.unirAPartida(codigo);
+    $('#listaPartidasCard').html(`
+        <div class="alert alert-success alert-sm mb-0">
+            <i class="fas fa-check-circle"></i> Uniéndose a la partida ${codigo}...
         </div>
-    `;
-    resultDiv.html(form);
-    $(boton).text(originalText).prop('disabled', false);
-}
-
-function mostrarEliminarUsuarioEnCard(resultDiv, boton, originalText) {
-    const form = `
-        <div class="border-top pt-3">
-            <div class="form-group mb-2">
-                <input type="text" class="form-control form-control-sm" id="nickEliminar" placeholder="Ingrese el nick a eliminar">
-            </div>
-            <button class="btn btn-outline-danger btn-sm btn-block" onclick="ejecutarEliminarUsuario()">Eliminar</button>
-            <div id="resultadoEliminar" class="mt-2"></div>
-        </div>
-    `;
-    resultDiv.html(form);
-    $(boton).text(originalText).prop('disabled', false);
-}
-
-// Funciones de ejecución
-function ejecutarAgregarUsuario() {
-    const nick = $('#nickAgregar').val();
-    if(nick) {
-        rest.agregarUsuario(nick);
-        $('#nickAgregar').val('');
-        setTimeout(() => {
-            $('#result-agregarUsuario').html('<div class="border-top pt-3"><small class="text-success">Usuario agregado correctamente</small></div>');
-        }, 500);
-    }
-}
-
-function ejecutarVerificarUsuario() {
-    const nick = $('#nickVerificar').val();
-    if(nick) {
-        $.ajax({
-            type:'GET',
-            url:'/usuarioActivo/'+nick,
-            success:function(data){
-                const estado = data.activo ? 
-                    '<span class="badge badge-success">Activo</span>' : 
-                    '<span class="badge badge-warning">No activo</span>';
-                $('#resultadoVerificar').html(estado);
-            }
-        });
-    }
-}
-
-function ejecutarEliminarUsuario() {
-    const nick = $('#nickEliminar').val();
-    if(nick) {
-        $.ajax({
-            type:'GET',
-            url:'/eliminarUsuario/'+nick,
-            success:function(data){
-                const mensaje = data.nick !== -1 ? 
-                    '<small class="text-success">Usuario eliminado</small>' : 
-                    '<small class="text-warning">Usuario no encontrado</small>';
-                $('#resultadoEliminar').html(mensaje);
-                $('#nickEliminar').val('');
-            }
-        });
-    }
+    `);
 }
 </script>
 
@@ -671,6 +564,7 @@ $(document).ready(function(){
     // Configurar evento del botón
     $('#btnGuardarNickGoogle').on('click', function(){
       let nick = $('#nickGoogle').val().trim();
+      let password = $('#passwordGoogle').val();
       
       // Validar nick
       const nickRegex = /^[a-zA-Z0-9_]{3,20}$/;
@@ -681,17 +575,37 @@ $(document).ready(function(){
         return;
       }
       
-      // Enviar nick al servidor
+      // Validar contraseña
+      if (!password || password.length < 6) {
+        $('#mensajeNickGoogle').removeClass('alert-success').addClass('alert-danger')
+          .text('La contraseña debe tener al menos 6 caracteres')
+          .show();
+        return;
+      }
+      
+      // Enviar nick y contraseña al servidor
       $.ajax({
         type: 'POST',
         url: '/guardarNickGoogle',
-        data: JSON.stringify({nick: nick}),
+        data: JSON.stringify({nick: nick, password: password}),
         contentType: 'application/json',
         success: function(data){
           if (data.success) {
             $('#modalNickGoogle').modal('hide');
-            cw.agregarUsuario(data.nick);
-            location.href = '/';
+            // Guardar cookies manualmente para asegurar que persistan
+            document.cookie = 'nick=' + data.nick + '; path=/; max-age=' + (7*24*60*60);
+            document.cookie = 'email=' + data.email + '; path=/; max-age=' + (7*24*60*60);
+            // Guardar email en ws si está disponible
+            if (data.email) {
+              ws.email = data.email;
+            }
+            // Mostrar mensaje de éxito y recargar
+            $('#mensajeNickGoogle').removeClass('alert-danger').addClass('alert-success')
+              .text('¡Cuenta creada exitosamente! Redirigiendo...').show();
+            // Redirigir a la raíz sin parámetros después de un pequeño delay
+            setTimeout(function() {
+              window.location.href = '/';
+            }, 500);
           } else {
             let mensaje = 'Error al guardar el nick';
             if (data.error === 'nick') {
