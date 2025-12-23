@@ -8,7 +8,19 @@ function CAD() {
   // conectar a Mongo Atlas
   this.conectar = async function(callback) {
     const cad = this;
-    const uri = process.env.MONGO_URI || process.env.MONGO_URL || 'mongodb+srv://dbuser:<db:password>@procesocluster.efauuxe.mongodb.net/?appName=ProcesoCluster';
+    let uri = process.env.MONGO_URI || process.env.MONGO_URL || 'mongodb+srv://dbuser:<db:password>@procesocluster.efauuxe.mongodb.net/?appName=ProcesoCluster';
+    
+    // Codificar la contraseña si contiene caracteres especiales
+    try {
+      const urlObj = new URL(uri);
+      if (urlObj.username && urlObj.password) {
+        const encodedPassword = encodeURIComponent(urlObj.password);
+        uri = uri.replace(urlObj.password, encodedPassword);
+      }
+    } catch (e) {
+      // Si falla el parseo de URL, continuar con la URI original
+    }
+    
     // Opciones para Node.js v24+ (fix SSL/TLS error)
     const client = new mongo(uri, { 
       tlsAllowInvalidCertificates: true,

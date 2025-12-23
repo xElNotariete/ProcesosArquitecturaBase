@@ -23,10 +23,11 @@ test.describe('Sistema UserManager - Tests E2E', () => {
     await page.click('button[type="submit"]');
     
     // 6. Esperar a que se complete el inicio de sesión y se recargue la página
-    await page.waitForTimeout(2000);
+    // Incrementar tiempo de espera para que la DB se conecte
+    await page.waitForTimeout(3000);
     
-    // 7. Verificar que se muestra el dashboard
-    await expect(page.locator('#dashboard')).toBeVisible();
+    // 7. Verificar que se muestra el dashboard (con más tiempo de espera)
+    await expect(page.locator('#dashboard')).toBeVisible({ timeout: 10000 });
     console.log('✓ Login exitoso - Dashboard visible');
     
     // 8. Verificar mensaje de bienvenida
