@@ -1,0 +1,500 @@
+/* 
+ * NEXUS PROTOCOL - Estilos Personalizables
+ * 
+ * Este archivo contiene todos los estilos de NEXUS PROTOCOL
+ * de forma separada para facilitar la personalización.
+ * 
+ * Para usarlo, incluye este archivo en nexus.html:
+ * <link rel="stylesheet" href="nexus-styles.css">
+ */
+
+/* ============= CONTENEDOR PRINCIPAL ============= */
+.nexus-container {
+  background: linear-gradient(135deg, #1a0a2e 0%, #3d1f5c 50%, #1a0a2e 100%);
+  min-height: 100vh;
+  color: #ff69b4;
+  font-family: 'Courier New', monospace;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto de cuadrícula de fondo */
+.nexus-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    repeating-linear-gradient(0deg, rgba(255,105,180,0.03) 0px, transparent 1px, transparent 2px, rgba(255,105,180,0.03) 3px),
+    repeating-linear-gradient(90deg, rgba(255,105,180,0.03) 0px, transparent 1px, transparent 2px, rgba(255,105,180,0.03) 3px);
+  pointer-events: none;
+}
+
+/* ============= TÍTULOS ============= */
+.nexus-title {
+  text-align: center;
+  margin-top: 80px;
+  margin-bottom: 60px;
+  text-shadow: 0 0 20px #ff69b4, 0 0 40px #ff1493;
+}
+
+.nexus-title h1 {
+  font-size: 72px;
+  font-weight: bold;
+  letter-spacing: 20px;
+  margin: 0;
+  color: #ff1493;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.nexus-title h2 {
+  font-size: 36px;
+  font-weight: 300;
+  letter-spacing: 15px;
+  margin: 10px 0 0 0;
+  color: #ff6b35;
+}
+
+.nexus-subtitle {
+  text-align: center;
+  font-size: 18px;
+  color: #ff6b35;
+  letter-spacing: 3px;
+  margin-bottom: 40px;
+}
+
+.nexus-section-title {
+  font-size: 28px;
+  text-align: center;
+  color: #ff1493;
+  letter-spacing: 5px;
+  margin-bottom: 30px;
+  text-transform: uppercase;
+}
+
+/* ============= ANIMACIONES ============= */
+@keyframes glow {
+  from { 
+    text-shadow: 0 0 20px #ff69b4, 0 0 30px #ff1493; 
+  }
+  to { 
+    text-shadow: 0 0 30px #ff1493, 0 0 60px #ff1493, 0 0 80px #ff69b4; 
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1); 
+  }
+  50% { 
+    transform: scale(1.05); 
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============= BOTONES ============= */
+.nexus-btn {
+  background: transparent;
+  border: 2px solid #ff69b4;
+  color: #ff69b4;
+  padding: 15px 40px;
+  font-size: 18px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 3px;
+  cursor: pointer;
+  margin: 10px;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+
+.nexus-btn:hover {
+  background: #ff69b4;
+  color: #1a0a2e;
+  box-shadow: 0 0 20px #ff69b4;
+  transform: scale(1.05);
+}
+
+.nexus-btn:active {
+  transform: scale(0.98);
+}
+
+.nexus-btn-secondary {
+  border-color: #ff6b35;
+  color: #ff6b35;
+}
+
+.nexus-btn-secondary:hover {
+  background: #ff6b35;
+  color: #0a0e27;
+  box-shadow: 0 0 20px #ff6b35;
+}
+
+/* Efecto de scan en hover */
+.nexus-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.nexus-btn:hover::before {
+  left: 100%;
+}
+
+/* ============= MENÚ ============= */
+.nexus-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 40px;
+  animation: slideIn 0.5s ease-out;
+}
+
+/* ============= SELECTOR DE MODO ============= */
+.nexus-mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 60px;
+  flex-wrap: wrap;
+  animation: slideIn 0.7s ease-out;
+}
+
+.nexus-mode-card {
+  background: rgba(157, 78, 221, 0.05);
+  border: 2px solid #9d4edd;
+  padding: 40px 30px;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 200px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.nexus-mode-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(0,255,249,0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.nexus-mode-card:hover::before {
+  opacity: 1;
+}
+
+.nexus-mode-card:hover {
+  background: rgba(157, 78, 221, 0.15);
+  box-shadow: 0 0 30px rgba(157, 78, 221, 0.5);
+  transform: translateY(-10px);
+  border-color: #00fff9;
+}
+
+.nexus-mode-card:active {
+  transform: translateY(-5px);
+}
+
+.nexus-mode-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 10px rgba(0, 255, 249, 0.5));
+}
+
+.nexus-mode-title {
+  font-size: 20px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ff69b4;
+}
+
+/* ============= ESTADÍSTICAS ============= */
+.nexus-stats-container {
+  max-width: 600px;
+  margin: 60px auto;
+  background: rgba(157, 78, 221, 0.05);
+  border: 2px solid #9d4edd;
+  padding: 40px;
+  animation: slideIn 0.5s ease-out;
+  position: relative;
+}
+
+.nexus-stats-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #00fff9, transparent);
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.nexus-stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 0;
+  border-bottom: 1px solid rgba(0, 255, 249, 0.3);
+  transition: all 0.3s;
+}
+
+.nexus-stat-row:last-child {
+  border-bottom: none;
+}
+
+.nexus-stat-row:hover {
+  background: rgba(0, 255, 249, 0.1);
+  padding-left: 10px;
+}
+
+.nexus-stat-label {
+  font-size: 16px;
+  color: #ff69b4;
+  letter-spacing: 2px;
+}
+
+.nexus-stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ff6b35;
+  text-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+}
+
+/* ============= CONTROL DE VOLUMEN ============= */
+.nexus-volume-control {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 100;
+}
+
+.nexus-volume-label {
+  color: #ff69b4;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.nexus-volume-control input[type="range"] {
+  -webkit-appearance: none;
+  width: 100px;
+  height: 4px;
+  background: rgba(0, 255, 249, 0.3);
+  outline: none;
+  border-radius: 2px;
+}
+
+.nexus-volume-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  background: #00fff9;
+  cursor: pointer;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00fff9;
+}
+
+.nexus-volume-control input[type="range"]::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  background: #00fff9;
+  cursor: pointer;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00fff9;
+  border: none;
+}
+
+/* ============= EFECTOS ESPECIALES ============= */
+
+/* Efecto de pantalla CRT */
+.nexus-container.crt-effect::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Parpadeo de pantalla (opcional) */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.95; }
+}
+
+.nexus-container.flicker {
+  animation: flicker 0.1s infinite;
+}
+
+/* ============= RESPONSIVE ============= */
+@media (max-width: 768px) {
+  .nexus-title h1 {
+    font-size: 48px;
+    letter-spacing: 10px;
+  }
+  
+  .nexus-title h2 {
+    font-size: 24px;
+    letter-spacing: 8px;
+  }
+  
+  .nexus-mode-selector {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .nexus-mode-card {
+    width: 80%;
+    max-width: 300px;
+  }
+  
+  .nexus-btn {
+    width: 80%;
+    max-width: 300px;
+  }
+  
+  .nexus-stats-container {
+    margin: 40px 20px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nexus-title h1 {
+    font-size: 36px;
+    letter-spacing: 5px;
+  }
+  
+  .nexus-title h2 {
+    font-size: 18px;
+    letter-spacing: 5px;
+  }
+  
+  .nexus-btn {
+    font-size: 14px;
+    padding: 12px 30px;
+  }
+  
+  .nexus-mode-icon {
+    font-size: 48px;
+  }
+}
+
+/* ============= CLASES AUXILIARES ============= */
+
+/* Ocultar elemento con animación */
+.nexus-fade-out {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Mostrar elemento con animación */
+.nexus-fade-in {
+  animation: fadeIn 0.3s ease-in forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Temblor (para efectos de impacto) */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.nexus-shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+/* Texto parpadeante */
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.3; }
+}
+
+.nexus-blink {
+  animation: blink 1s linear infinite;
+}
+
+/* ============= TEMAS ALTERNATIVOS ============= */
+
+/* Tema Verde Matrix */
+.nexus-container.theme-matrix {
+  background: linear-gradient(135deg, #001a00 0%, #003300 50%, #001a00 100%);
+}
+
+.theme-matrix .nexus-title h1,
+.theme-matrix .nexus-btn,
+.theme-matrix .nexus-stat-label {
+  color: #00ff00;
+  border-color: #00ff00;
+}
+
+.theme-matrix .nexus-btn:hover {
+  background: #00ff00;
+  box-shadow: 0 0 20px #00ff00;
+}
+
+/* Tema Rojo Alerta */
+.nexus-container.theme-alert {
+  background: linear-gradient(135deg, #1a0000 0%, #330000 50%, #1a0000 100%);
+}
+
+.theme-alert .nexus-title h1,
+.theme-alert .nexus-btn,
+.theme-alert .nexus-stat-label {
+  color: #ff0000;
+  border-color: #ff0000;
+}
+
+.theme-alert .nexus-btn:hover {
+  background: #ff0000;
+  box-shadow: 0 0 20px #ff0000;
+}

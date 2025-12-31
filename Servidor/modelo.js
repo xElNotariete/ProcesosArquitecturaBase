@@ -332,9 +332,115 @@ function Partida(codigo){
   this.codigo = codigo;
   this.jugadores = [];
   this.maxJug = 2;
+  this.enemigosNeutralizados = 0;
+  this.tiempoInicio = null;
+  this.datosRecopilados = 0;
+  this.modo = null; // 'individual', '1vs1', 'todos-contra-todos'
+  this.estado = 'esperando'; // 'esperando', 'en-curso', 'finalizada'
+  this.nombre = null; // Nombre de la partida
 }
 
+// Métodos para gestión de partidas multijugador
+Sistema.prototype.crearPartidaMultijugador = function(datos) {
+  const codigo = 'GAME_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  const partida = new Partida(codigo);
+  
+  partida.modo = datos.modo || 'individual';
+  partida.nombre = datos.nombre || 'Partida sin nombre';
+  partida.maxJug = datos.modo === '1vs1' ? 2 : 4;
+  partida.estado = 'esperando';
+  
+  // Agregar jugador creador (sin socketId aún, se agregará cuando se conecte por WebSocket)
+  partida.jugadores.push({
+    email: datos.jugador.email,
+    nick: datos.jugador.nick,
+    socketId: null, // Se asignará cuando se conecte
+    tanque: null, // Se elegirá después
+    puntos: 0,
+    vidas: 3
+  });
+  
+  this.partidas[codigo] = partida;
+  
+  console.log('[Sistema] Partida creada:', codigo, 'Modo:', partida.modo, 'Creador:', datos.jugador.nick);
+  return partida;
+};
+
+Sistema.prototype.obtenerPartidasDisponibles = function() {
+  const disponibles = [];
+  
+  for (let codigo in this.partidas) {
+    const partida = this.partidas[codigo];
+    
+    // Solo mostrar partidas que están esperando jugadores
+    if (partida.estado === 'esperando') {
+      disponibles.push({
+        codigo: partida.codigo,
+        nombre: partida.nombre,
+        modo: partida.modo,
+        jugadores: partida.jugadores,
+        maxJug: partida.maxJug,
+        estado: partida.estado
+      });
+    }
+  }
+  
+  return disponibles;
+};
+
+Sistema.prototype.unirseAPartida = function(codigo, jugador) {
+  const partida = this.partidas[codigo];
+  
+  if (!partida) {
+    return { ok: false, error: 'Partida no encontrada' };
+  }
+  
+  if (partida.estado !== 'esperando') {
+    return { ok: false, error: 'La partida ya comenzó' };
+  }
+  
+  if (partida.jugadores.length >= partida.maxJug) {
+    return { ok: false, error: 'Partida llena' };
+  }
+  
+  // Verificar que el jugador no esté ya en la partida
+  const yaEsta = partida.jugadores.some(j => j.email === jugador.email);
+  if (yaEsta) {
+    return { ok: true, mensaje: 'Ya estás en esta partida' };
+  }
+  
+  partida.jugadores.push({
+    email: jugador.email,
+    nick: jugador.nick,
+    tanque: null, // Se elegirá después
+    puntos: 0,
+    vidas: 3
+  });
+  
+  console.log('[Sistema] Jugador unido:', jugador.nick, 'a partida:', codigo);
+  
+  // Si se llenó la partida, cambiar estado
+  if (partida.jugadores.length >= partida.maxJug) {
+    partida.estado = 'en-curso';
+    partida.tiempoInicio = Date.now();
+  }
+  
+  return { ok: true, partida: partida };
+};
+
+Sistema.prototype.obtenerPartida = function(codigo) {
+  return this.partidas[codigo] || null;
+};
+
+Sistema.prototype.actualizarEstadoPartida = function(codigo, estado) {
+  if (this.partidas[codigo]) {
+    this.partidas[codigo].estado = estado;
+    return true;
+  }
+  return false;
+};
 function Usuario(nick){
- this.nick=nick;
+  this.nick=nick;
 }
-module.exports.Sistema=Sistema
+
+module.exports.Sistema=Sistema;

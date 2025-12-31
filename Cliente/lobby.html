@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS PROTOCOL</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a0a2e 0%, #3d1f5c 50%, #1a0a2e 100%);
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: #ff69b4;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenedor principal donde se cargarán las pantallas NEXUS -->
+    <div id="contenido"></div>
+    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="clienteRest.js"></script>
+    <script src="clienteWS.js"></script>
+    <script src="controlWeb.js"></script>
+    <script>
+        // Inicializar
+        console.log('[Lobby] Inicializando...');
+        let rest = new ClienteRest();
+        let ws = new ClienteWS();
+        let cw = new ControlWeb(rest, ws);
+        
+        // Mostrar menú principal al cargar
+        $(document).ready(function() {
+            console.log('[Lobby] Mostrando menú NEXUS...');
+            cw.mostrarMenuNexus();
+        });
+    </script>
+</body>
+</html>

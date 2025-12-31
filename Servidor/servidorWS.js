@@ -50,6 +50,79 @@ function ServidorWS(){
 				}
 			});
 			
+			// Nuevo evento: Unirse a partida multijugador (para sala de espera)
+			socket.on("unirsePartida", function(datos) {
+				console.log("[servidorWS] Jugador intentando unirse a partida:", datos.codigo, "con nick:", datos.nick);
+				const partida = sistema.partidas[datos.codigo];
+				
+				if (!partida) {
+					yo.enviarAlRemitente(socket, "error", {mensaje: "Partida no encontrada"});
+					return;
+				}
+				
+				// Buscar si ya existe un jugador con este nick/email (el creador)
+				let jugadorExistente = null;
+				if (datos.nick) {
+					jugadorExistente = partida.jugadores.find(j => 
+						j.nick === datos.nick
+					);
+				}
+				
+				if (jugadorExistente) {
+					// Es el jugador creador reconectándose, actualizar su socketId y tanque
+					console.log("[servidorWS] Jugador creador reconectado");
+					jugadorExistente.socketId = socket.id;
+					jugadorExistente.tanque = datos.tanque || 'equilibrado';
+				} else {
+					// Es un nuevo jugador uniéndose
+					console.log("[servidorWS] Nuevo jugador uniéndose");
+					
+					// Verificar si hay espacio
+					if (partida.jugadores.length >= partida.maxJug) {
+						yo.enviarAlRemitente(socket, "error", {mensaje: "Partida llena"});
+						return;
+					}
+					
+					// Agregar nuevo jugador
+					partida.jugadores.push({
+						socketId: socket.id,
+						nick: datos.nick || "Jugador" + (partida.jugadores.length + 1),
+						tanque: datos.tanque || 'equilibrado',
+						puntos: 0,
+						vidas: 3
+					});
+				}
+				
+				// Unir socket a la sala
+				socket.join(datos.codigo);
+				console.log("[servidorWS] Jugador unido. Total en partida:", partida.jugadores.length + "/" + partida.maxJug);
+				
+				// Enviar actualización a todos en la sala
+				io.to(datos.codigo).emit("partidaActualizada", {
+					codigo: partida.codigo,
+					modo: partida.modo,
+					jugadores: partida.jugadores,
+					maxJug: partida.maxJug
+				});
+				
+				// Si la partida está completa, iniciarla
+				const minJugadores = partida.modo === '1vs1' ? 2 : 2; // Min 2 para todos contra todos
+				if (partida.jugadores.length >= minJugadores && partida.estado === 'esperando') {
+					console.log("[servidorWS] ¡Partida completa! Iniciando juego...");
+					partida.estado = 'en-curso';
+					partida.tiempoInicio = Date.now();
+					
+					// Pequeño delay para que todos vean la pantalla completa
+					setTimeout(() => {
+						io.to(datos.codigo).emit("partidaIniciada", {
+							codigo: partida.codigo,
+							modo: partida.modo,
+							jugadores: partida.jugadores
+						});
+					}, 1000);
+				}
+			});
+			
 			socket.on("obtenerPartidasDisponibles",function(datos){
 				const lista = sistema.obtenerPartidasDisponibles();
 				// Convertir array a objeto con código como clave
@@ -58,6 +131,36 @@ function ServidorWS(){
 					partidasObj[p.codigo] = {owner: p.emailCreador};
 				});
 				yo.enviarAlRemitente(socket,"partidasDisponibles",{partidas:partidasObj});
+			});
+			
+			// Manejar desconexión
+			socket.on("disconnect", function() {
+				console.log("[servidorWS] Socket desconectado:", socket.id);
+				
+				// Buscar en qué partida estaba el jugador
+				for (let codigo in sistema.partidas) {
+					const partida = sistema.partidas[codigo];
+					const index = partida.jugadores.findIndex(j => j.socketId === socket.id);
+					
+					if (index !== -1) {
+						console.log("[servidorWS] Jugador salió de partida:", codigo);
+						partida.jugadores.splice(index, 1);
+						
+						// Notificar a los demás
+						io.to(codigo).emit("partidaActualizada", {
+							codigo: partida.codigo,
+							modo: partida.modo,
+							jugadores: partida.jugadores,
+							maxJug: partida.maxJug
+						});
+						
+						// Si la partida queda vacía, eliminarla
+						if (partida.jugadores.length === 0) {
+							delete sistema.partidas[codigo];
+							console.log("[servidorWS] Partida eliminada por falta de jugadores");
+						}
+					}
+				}
 			});
 		});
 	}

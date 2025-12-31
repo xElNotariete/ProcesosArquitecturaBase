@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TANK BATTLE - Bomberman Style</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a0a2e 0%, #3d1f5c 50%, #1a0a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 40px rgba(255, 105, 180, 0.5);
+        }
+        
+        #gameCanvas {
+            display: block;
+            border: 3px solid #ff69b4;
+            background: #0a0520;
+        }
+        
+        #titulo {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ff1493;
+            font-size: 48px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px #ff1493, 0 0 40px #ff1493;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 20px #ff1493, 0 0 30px #ff1493;
+            }
+            to {
+                text-shadow: 0 0 30px #ff1493, 0 0 60px #ff1493, 0 0 80px #ff69b4;
+            }
+        }
+        
+        #instrucciones {
+            text-align: center;
+            margin-top: 15px;
+            color: #ff69b4;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+        
+        .instruccion {
+            display: inline-block;
+            margin: 0 15px;
+            padding: 8px 15px;
+            background: rgba(157, 78, 221, 0.2);
+            border: 1px solid #9d4edd;
+            border-radius: 5px;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff69b4;
+            font-size: 24px;
+            text-align: center;
+            z-index: 10;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 105, 180, 0.3);
+            border-top: 4px solid #ff69b4;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .shake {
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+        
+        #powerUpInfo {
+            position: absolute;
+            top: 10px;
+            right: -280px;
+            width: 260px;
+            background: rgba(10, 5, 32, 0.95);
+            border: 2px solid #9d4edd;
+            border-radius: 10px;
+            padding: 15px;
+            color: #ff69b4;
+        }
+        
+        #powerUpInfo h3 {
+            color: #ff1493;
+            margin-bottom: 10px;
+            font-size: 18px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .powerup-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 13px;
+            padding: 5px;
+            background: rgba(157, 78, 221, 0.2);
+            border-radius: 5px;
+        }
+        
+        .powerup-icon {
+            font-size: 20px;
+            margin-right: 10px;
+            width: 30px;
+            text-align: center;
+        }
+        
+        #ayuda {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 5, 32, 0.95);
+            border: 2px solid #ff1493;
+            border-radius: 10px;
+            padding: 15px 25px;
+            color: #ff69b4;
+            font-size: 14px;
+            z-index: 100;
+            max-width: 800px;
+            box-shadow: 0 0 30px rgba(255, 20, 147, 0.5);
+        }
+        
+        #ayuda h4 {
+            color: #ff1493;
+            margin: 0 0 10px 0;
+            text-align: center;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .ayuda-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .ayuda-item {
+            background: rgba(157, 78, 221, 0.2);
+            padding: 8px 12px;
+            border-radius: 5px;
+            border-left: 3px solid #ff1493;
+        }
+        
+        .ayuda-item strong {
+            color: #ff1493;
+            display: inline-block;
+            min-width: 120px;
+        }
+        
+        #cerrarAyuda {
+            background: #ff1493;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 15px auto 0;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+        
+        #cerrarAyuda:hover {
+            background: #ff69b4;
+            box-shadow: 0 0 15px rgba(255, 20, 147, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div id="titulo">TANK BATTLE</div>
+    
+    <!-- Contenedor para pantallas de victoria/derrota -->
+    <div id="contenido" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:30; overflow-y:auto;"></div>
+    
+    <div id="gameContainer">
+        <div id="loading">
+            <div class="spinner"></div>
+            <div>CARGANDO BATALLA...</div>
+        </div>
+        
+        <!-- Sala de espera para multijugador -->
+        <div id="waitingRoom" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; width:100vw; height:100vh; background: linear-gradient(135deg, rgba(26,10,46,0.98) 0%, rgba(61,31,92,0.98) 50%, rgba(26,10,46,0.98) 100%); z-index:20; text-align:center; overflow-y:auto; overflow-x:hidden;">
+            <div style="min-height:100vh; padding:40px 20px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                
+                <div style="animation: pulse 2s ease-in-out infinite; margin-bottom:25px;">
+                    <h2 style="color:#ff1493; font-size:clamp(32px, 6vw, 52px); margin-bottom:10px; text-shadow: 0 0 30px #ff1493, 0 0 50px #ff1493; letter-spacing:clamp(2px, 1vw, 6px); font-weight:bold;">SALA DE ESPERA</h2>
+                    <div style="font-size:clamp(48px, 8vw, 72px); text-shadow: 0 0 40px #ff6b35;">⏳</div>
+                </div>
+                
+                <div style="max-width:90%; width:700px; margin:0 auto 30px; background:linear-gradient(135deg, rgba(255,107,53,0.25) 0%, rgba(10,5,32,0.9) 100%); padding:clamp(20px, 4vw, 35px); border:4px solid #ff6b35; border-radius:20px; box-shadow: 0 0 60px rgba(255,107,53,0.7), inset 0 0 40px rgba(255,107,53,0.15);">
+                    <p style="font-size:clamp(16px, 3vw, 20px); color:#ff69b4; margin-bottom:15px; letter-spacing:2px; text-shadow:0 0 10px #ff69b4;">COMPARTE ESTE CÓDIGO</p>
+                    <div style="background:rgba(26,10,46,0.95); padding:20px; border:3px solid #ff1493; border-radius:15px; margin-bottom:20px; box-shadow: inset 0 0 30px rgba(255,20,147,0.3);">
+                        <p id="codigoPartidaDisplay" style="font-size:clamp(28px, 7vw, 56px); color:#ff6b35; font-weight:bold; margin:0; letter-spacing:clamp(3px, 1.5vw, 8px); text-shadow: 0 0 25px #ff6b35, 0 0 40px #ff6b35; font-family:'Courier New',monospace; word-break:break-all;"></p>
+                    </div>
+                    <button id="btnCopiarCodigo" style="background:linear-gradient(135deg, #ff1493 0%, #ff6b35 100%); color:white; border:none; padding:clamp(12px, 2vw, 15px) clamp(30px, 5vw, 40px); border-radius:10px; cursor:pointer; font-weight:bold; font-family:'Courier New',monospace; font-size:clamp(14px, 2.5vw, 18px); letter-spacing:3px; box-shadow: 0 0 30px rgba(255,20,147,0.7); transition: all 0.3s; text-transform:uppercase; width:100%; max-width:300px;">
+                        📋 COPIAR CÓDIGO
+                    </button>
+                </div>
+                
+                <div style="color:#9d4edd; font-size:clamp(14px, 2.5vw, 18px); margin-bottom:25px;">
+                    <p id="modoDisplay" style="font-size:clamp(18px, 3.5vw, 24px); letter-spacing:3px; text-shadow:0 0 15px #9d4edd; margin-bottom:10px;"></p>
+                    <p id="jugadoresDisplay" style="font-size:clamp(24px, 4vw, 32px); font-weight:bold; color:#ff1493; text-shadow:0 0 20px #ff1493;"></p>
+                </div>
+            
+            <div id="listaJugadores" style="color:#ff69b4; font-size:clamp(14px, 2.5vw, 18px); margin:20px auto; max-width:90%; width:550px; text-align:left; padding:clamp(20px, 4vw, 30px); background:linear-gradient(135deg, rgba(157,78,221,0.25) 0%, rgba(10,5,32,0.9) 100%); border:4px solid #9d4edd; border-radius:20px; box-shadow: 0 0 50px rgba(157,78,221,0.6);">
+                <h3 style="text-align:center; margin-bottom:20px; color:#ff1493; font-size:clamp(20px, 4vw, 28px); letter-spacing:3px; text-shadow:0 0 20px #ff1493;">⚔️ JUGADORES CONECTADOS ⚔️</h3>
+                <ul id="jugadoresLista" style="list-style:none; padding:0;"></ul>
+            </div>
+            <div style="margin-top:30px; margin-bottom:40px;">
+                <div class="spinner" style="border-width:5px; width:60px; height:60px; margin:0 auto;"></div>
+                <p style="color:#ff69b4; font-size:clamp(14px, 2.5vw, 18px); margin-top:20px; letter-spacing:2px; animation: blink 1.5s ease-in-out infinite;">Esperando más jugadores...</p>
+            </div>
+            
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="powerUpInfo">
+            <h3>POWER-UPS</h3>
+            <div class="powerup-item">
+                <span class="powerup-icon"><img src="img/overdrive.png" alt="OVERDRIVE" style="width: 45px; height: 45px; filter: drop-shadow(0 0 8px #00ffff);"></span>
+                <span>OVERDRIVE</span>
+            </div>
+            <div class="powerup-item">
+                <span class="powerup-icon"><img src="img/rapidfire.png" alt="RAPIDFIRE" style="width: 45px; height: 45px; filter: drop-shadow(0 0 8px #ff6b35);"></span>
+                <span>RAPIDFIRE</span>
+            </div>
+            <div class="powerup-item">
+                <span class="powerup-icon"><img src="img/regencore.png" alt="REGEN CORE" style="width: 45px; height: 45px; filter: drop-shadow(0 0 8px #ff1493);"></span>
+                <span>REGEN CORE</span>
+            </div>
+            <div class="powerup-item">
+                <span class="powerup-icon"><img src="img/fieldForce.png" alt="FORCE FIELD" style="width: 45px; height: 45px; filter: drop-shadow(0 0 8px #9d4edd);"></span>
+                <span>FORCE FIELD</span>
+            </div>
+            <div class="powerup-item">
+                <span class="powerup-icon"><img src="img/multishot.png" alt="MULTI-SHOT" style="width: 45px; height: 45px; filter: drop-shadow(0 0 8px #ff69b4);"></span>
+                <span>MULTI-SHOT</span>
+            </div>
+            <div class="powerup-item">
+                <span class="powerup-icon"><img src="img/blastmine.png" alt="BLAST MINE" style="width: 45px; height: 45px; filter: drop-shadow(0 0 8px #ff6b35);"></span>
+                <span>BLAST MINE</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="ayuda">
+        <h4>⚡ CONTROLES Y PODERES ⚡</h4>
+        <div class="ayuda-grid">
+            <div class="ayuda-item">
+                <strong>WASD o Flechas:</strong> Mover tanque
+            </div>
+            <div class="ayuda-item">
+                <strong>ESPACIO:</strong> Disparar proyectil
+            </div>
+            <div class="ayuda-item">
+                <strong>B:</strong> Colocar bomba (si tienes 💣)
+            </div>
+            <div class="ayuda-item">
+                <strong>⚡ OVERDRIVE:</strong> Movimiento más rápido
+            </div>
+            <div class="ayuda-item">
+                <strong>🔥 RAPIDFIRE:</strong> Cadencia mejorada
+            </div>
+            <div class="ayuda-item">
+                <strong>❤️ REGEN CORE:</strong> +1 punto de vida
+            </div>
+            <div class="ayuda-item">
+                <strong>🛡️ FORCE FIELD:</strong> Invulnerable 5 seg
+            </div>
+            <div class="ayuda-item">
+                <strong>✨ MULTI-SHOT:</strong> Dispara 3 a la vez
+            </div>
+        </div>
+        <button id="cerrarAyuda">CERRAR [ENTER]</button>
+    </div>
+    
+    <div id="instrucciones">
+        <span class="instruccion">Objetivo: Eliminar los 3 enemigos</span>
+        <span class="instruccion">Recoge power-ups para mejorar</span>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="clienteRest.js"></script>
+    <script src="controlWeb.js"></script>
+    <script src="clienteWS.js"></script>
+    <script src="tankBattle.js"></script>
+    <script>
+        console.log('[Game] Página cargada');
+        
+        // Inicializar ControlWeb para pantallas de victoria/derrota
+        const cw = new ControlWeb();
+        
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const modo = urlParams.get('modo') || 'individual';
+        const tanque = urlParams.get('tanque') || 'equilibrado';
+        const codigoPartida = urlParams.get('codigo');
+        
+        console.log('[Game] Parámetros:', {modo, tanque, codigoPartida});
+        
+        // Variables globales
+        let juego = null;
+        let ws = null;
+        let partidaInfo = null;
+        let usuarioActual = null;
+        
+        // Función principal de inicialización
+        function inicializarJuego() {
+            console.log('[Game] Iniciando juego...');
+            
+            // Si es modo individual, iniciar directamente
+            if (modo === 'individual') {
+                document.getElementById('loading').style.display = 'none';
+                iniciarJuegoReal({ modo: 'individual', jugadores: [] });
+            } 
+            // Si es multijugador, conectar WebSocket y mostrar sala de espera
+            else if (codigoPartida) {
+                console.log('[Game] Modo multijugador - conectando WebSocket...');
+                ws = io();
+                
+                // Evento: Error de conexión
+                ws.on('connect_error', function(err) {
+                    console.error('[WS] Error de conexión:', err);
+                    document.getElementById('loading').innerHTML = '<div class="spinner"></div><div style="color:#ff0000;">Error de conexión al servidor</div>';
+                });
+                
+                // Evento: Conectado
+                ws.on('connect', function() {
+                    console.log('[WS] Conectado al servidor');
+                    
+                    // Unirse a la sala de la partida
+                    console.log('[WS] Emitiendo unirsePartida con:', {
+                        codigo: codigoPartida,
+                        tanque: tanque,
+                        nick: usuarioActual ? usuarioActual.nick : 'Jugador'
+                    });
+                    
+                    ws.emit('unirsePartida', {
+                        codigo: codigoPartida,
+                        tanque: tanque,
+                        nick: usuarioActual ? usuarioActual.nick : 'Jugador'
+                    });
+                });
+                
+                // Evento: Información de la partida actualizada
+                ws.on('partidaActualizada', function(data) {
+                    console.log('[WS] Partida actualizada:', data);
+                    partidaInfo = data;
+                    actualizarListaJugadores(data.jugadores);
+                    
+                    // Mostrar sala de espera si no está ya visible
+                    if (document.getElementById('waitingRoom').style.display === 'none') {
+                        mostrarSalaEspera();
+                    }
+                });
+                
+                // Evento: Partida lista para iniciar
+                ws.on('partidaIniciada', function(data) {
+                    console.log('[WS] ¡Partida iniciada!', data);
+                    iniciarJuegoReal(data);
+                });
+                
+                // Evento: Error
+                ws.on('error', function(data) {
+                    console.error('[WS] Error:', data);
+                    alert('Error: ' + (data.mensaje || 'Error desconocido'));
+                    window.location.href = '/lobby';
+                });
+                
+                // Timeout de seguridad: si no se muestra nada en 3 segundos, mostrar sala
+                setTimeout(() => {
+                    if (document.getElementById('loading').style.display !== 'none' && 
+                        document.getElementById('waitingRoom').style.display === 'none') {
+                        console.log('[Game] Timeout - mostrando sala de espera');
+                        mostrarSalaEspera();
+                    }
+                }, 3000);
+            }
+            
+            console.log('[Game] Inicialización completa');
+        }
+        
+        // Obtener usuario actual y luego inicializar
+        fetch('/obtenerUsuarioActual')
+            .then(res => res.json())
+            .then(data => {
+                usuarioActual = data;
+                console.log('[Game] Usuario actual:', usuarioActual);
+                
+                // Inicializar después de obtener usuario
+                setTimeout(inicializarJuego, 500);
+            })
+            .catch(err => {
+                console.error('[Game] Error obteniendo usuario:', err);
+                // Inicializar de todos modos
+                setTimeout(inicializarJuego, 500);
+            });
+        
+        // Función para mostrar sala de espera
+        function mostrarSalaEspera() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('waitingRoom').style.display = 'block';
+            document.getElementById('codigoPartidaDisplay').textContent = codigoPartida;
+            
+            const modoTexto = modo === '1vs1' ? '🎯 1 VS 1 (2 JUGADORES)' : '💥 TODOS CONTRA TODOS (2-4 JUGADORES)';
+            document.getElementById('modoDisplay').textContent = modoTexto;
+            
+            // Configurar botón copiar código
+            document.getElementById('btnCopiarCodigo').onclick = function() {
+                navigator.clipboard.writeText(codigoPartida).then(function() {
+                    const btn = document.getElementById('btnCopiarCodigo');
+                    const textoOriginal = btn.innerHTML;
+                    btn.innerHTML = '✓ COPIADO!';
+                    btn.style.background = 'linear-gradient(135deg, #00ff00 0%, #00aa00 100%)';
+                    btn.style.transform = 'scale(1.1)';
+                    setTimeout(function() {
+                        btn.innerHTML = textoOriginal;
+                        btn.style.background = 'linear-gradient(135deg, #ff1493 0%, #ff6b35 100%)';
+                        btn.style.transform = 'scale(1)';
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Error al copiar:', err);
+                    alert('Código de partida: ' + codigoPartida);
+                });
+            };
+            
+            // Agregar hover effect
+            const btn = document.getElementById('btnCopiarCodigo');
+            btn.onmouseenter = () => { btn.style.transform = 'translateY(-3px)'; btn.style.boxShadow = '0 0 50px rgba(255,20,147,0.9)'; };
+            btn.onmouseleave = () => { btn.style.transform = 'translateY(0)'; btn.style.boxShadow = '0 0 30px rgba(255,20,147,0.7)'; };
+        }
+        
+        // Función para actualizar lista de jugadores en sala de espera
+        function actualizarListaJugadores(jugadores) {
+            const lista = document.getElementById('jugadoresLista');
+            lista.innerHTML = '';
+            
+            jugadores.forEach((j, index) => {
+                const li = document.createElement('li');
+                li.style.padding = 'clamp(12px, 2vw, 15px) clamp(15px, 3vw, 20px)';
+                li.style.marginBottom = '12px';
+                li.style.background = 'linear-gradient(90deg, rgba(255,20,147,0.4) 0%, rgba(157,78,221,0.2) 100%)';
+                li.style.borderRadius = '10px';
+                li.style.borderLeft = '5px solid #ff1493';
+                li.style.transition = 'all 0.3s';
+                li.style.boxShadow = '0 0 15px rgba(255,20,147,0.3)';
+                li.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap:wrap; gap:10px;">
+                        <div style="flex:1; min-width:150px;">
+                            <span style="font-size:clamp(18px, 3vw, 24px); margin-right:8px;">🎮</span>
+                            <strong style="font-size:clamp(16px, 2.5vw, 20px); color:#ff6b35; text-shadow:0 0 10px #ff6b35;">${index + 1}.</strong>
+                            <span style="font-size:clamp(14px, 2.2vw, 18px); color:#ff69b4; margin-left:8px; letter-spacing:1px; word-break:break-word;">${j.nick || j.email}</span>
+                        </div>
+                        <span style="font-size:clamp(12px, 2vw, 16px); color:#9d4edd; background:rgba(157,78,221,0.2); padding:5px 12px; border-radius:5px; white-space:nowrap;">✓ LISTO</span>
+                    </div>
+                `;
+                lista.appendChild(li);
+            });
+            
+            const maxJug = modo === '1vs1' ? 2 : 4;
+            document.getElementById('jugadoresDisplay').textContent = 
+                jugadores.length + ' / ' + maxJug + ' JUGADORES';
+        }
+        
+        // Función para iniciar el juego real
+        function iniciarJuegoReal(partidaData) {
+            console.log('[Game] Iniciando juego con datos:', partidaData);
+            document.getElementById('waitingRoom').style.display = 'none';
+            document.getElementById('gameCanvas').style.display = 'block';
+            
+            // Crear instancia del juego
+            juego = new TankBattle();
+            juego.ws = ws;
+            
+            // Iniciar juego pasando el modo
+            const esMultijugador = codigoPartida ? true : false;
+            juego.iniciar('gameCanvas', esMultijugador, codigoPartida, modo);
+            
+            // Configurar tanque del jugador según elección
+            if (juego.jugador) {
+                switch(tanque) {
+                    case 'rapido':
+                        juego.jugador.tipo = 'rapido';
+                        juego.jugador.velocidad = 4;
+                        juego.jugador.vida = 2;
+                        juego.jugador.vidaMaxima = 2;
+                        break;
+                    case 'pesado':
+                        juego.jugador.tipo = 'pesado';
+                        juego.jugador.velocidad = 1.5;
+                        juego.jugador.vida = 5;
+                        juego.jugador.vidaMaxima = 5;
+                        break;
+                    case 'francotirador':
+                        juego.jugador.tipo = 'francotirador';
+                        juego.jugador.velocidad = 2.5;
+                        juego.jugador.cadenciaDisparo = 800;
+                        juego.jugador.vida = 3;
+                        juego.jugador.vidaMaxima = 3;
+                        break;
+                    default: // equilibrado
+                        juego.jugador.tipo = 'equilibrado';
+                        juego.jugador.velocidad = 2;
+                        juego.jugador.vida = 3;
+                        juego.jugador.vidaMaxima = 3;
+                }
+                console.log('[Game] Tanque configurado:', tanque, juego.jugador);
+            }
+        }
+        
+        // Cerrar panel de ayuda
+        document.getElementById('cerrarAyuda').addEventListener('click', function() {
+            document.getElementById('ayuda').style.display = 'none';
+        });
+        
+        // Cerrar ayuda con Enter
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && document.getElementById('ayuda').style.display !== 'none') {
+                document.getElementById('ayuda').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width, initial-scale=1">
- <title>UserManager - Bienvenido</title>
+ <title>NEXUS PROTOCOL - AUTORIZACIÓN</title>
  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -17,16 +17,17 @@
  <script src="clienteWS.js"></script>
  <style>
   body {
-   background: linear-gradient(135deg, #4a90e2 0%, #67b5e8 50%, #85c9f2 100%) !important;
+   background: linear-gradient(135deg, #1a0a2e 0%, #3d1f5c 50%, #1a0a2e 100%) !important;
    margin: 0;
    padding: 0;
    min-height: 100vh;
+   font-family: 'Courier New', monospace;
   }
   .container {
    background-color: transparent;
   }
   .hero-section {
-   background: linear-gradient(135deg, #4a90e2 0%, #67b5e8 100%);
+   background: linear-gradient(135deg, #1a0a2e 0%, #3d1f5c 100%);
    color: white;
    padding: 100px 0;
    min-height: 80vh;
@@ -46,20 +47,27 @@
    opacity: 0.3;
   }
   .hero-section h1 {
-   color: #ffffff;
-   text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+   color: #ff1493;
+   text-shadow: 0 0 20px #ff1493, 0 0 40px #ff1493;
    font-weight: 700;
+   letter-spacing: 4px;
+   animation: glow 2s ease-in-out infinite alternate;
+  }
+  @keyframes glow {
+   from { text-shadow: 0 0 20px #ff1493, 0 0 30px #ff1493; }
+   to { text-shadow: 0 0 30px #ff1493, 0 0 60px #ff1493, 0 0 80px #ff69b4; }
   }
   .hero-section p {
-   color: #ffffff;
+   color: #ff69b4;
    font-size: 1.2rem;
-   text-shadow: 1px 1px 4px rgba(0,0,0,0.1);
+   text-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+   letter-spacing: 1px;
   }
   .feature-icon {
    font-size: 3rem;
-   color: #ff9800;
+   color: #ff6b35;
    margin-bottom: 1rem;
-   text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+   text-shadow: 0 0 15px #ff6b35;
   }
   .btn-custom {
    padding: 15px 45px;
@@ -72,29 +80,32 @@
    letter-spacing: 0.5px;
   }
   .btn-custom.btn-light {
-   background: linear-gradient(135deg, #ff9800 0%, #ff6b35 100%);
+   background: linear-gradient(135deg, #9d4edd 0%, #ff1493 100%);
    color: white;
-   border: none;
-   box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+   border: 2px solid #ff69b4;
+   box-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
+   letter-spacing: 2px;
   }
   .btn-custom.btn-light:hover {
-   background: linear-gradient(135deg, #ffa726 0%, #ff7043 100%);
+   background: linear-gradient(135deg, #ff1493 0%, #9d4edd 100%);
    transform: translateY(-3px);
-   box-shadow: 0 6px 25px rgba(255, 152, 0, 0.6);
+   box-shadow: 0 0 30px rgba(255, 105, 180, 0.8);
    color: white;
+   border-color: #ff1493;
   }
   .btn-custom.btn-outline-light {
-   background: rgba(255, 255, 255, 0.2);
-   color: white;
-   border: 3px solid white;
+   background: rgba(157, 78, 221, 0.2);
+   color: #ff69b4;
+   border: 3px solid #ff69b4;
    backdrop-filter: blur(10px);
+   letter-spacing: 2px;
   }
   .btn-custom.btn-outline-light:hover {
-   background: white;
-   color: #4a90e2;
-   border: 3px solid white;
+   background: rgba(255, 105, 180, 0.3);
+   color: #ff1493;
+   border: 3px solid #ff1493;
    transform: translateY(-3px);
-   box-shadow: 0 6px 25px rgba(255, 255, 255, 0.5);
+   box-shadow: 0 0 25px rgba(255, 105, 180, 0.6);
   }
   .google-btn {
    background: white;
@@ -107,39 +118,41 @@
   }
   .card-login {
    border-radius: 20px;
-   box-shadow: 0 10px 40px rgba(74, 144, 226, 0.2);
-   background: white;
-   border: 2px solid #e3f2fd;
+   box-shadow: 0 0 40px rgba(157, 78, 221, 0.5);
+   background: rgba(10, 5, 32, 0.95);
+   border: 2px solid #9d4edd;
   }
   .card {
-   background: white !important;
-   border: 2px solid #e3f2fd;
+   background: rgba(10, 5, 32, 0.9) !important;
+   border: 2px solid #9d4edd;
    border-radius: 15px;
    transition: all 0.3s ease;
   }
   .card:hover {
    transform: translateY(-5px);
-   box-shadow: 0 8px 25px rgba(74, 144, 226, 0.3);
-   border-color: #4a90e2;
+   box-shadow: 0 0 30px rgba(255, 105, 180, 0.5);
+   border-color: #ff69b4;
   }
   #dashboard {
-   background: linear-gradient(to bottom, #e3f2fd 0%, #f5f9ff 100%) !important;
+   background: linear-gradient(to bottom, #1a0a2e 0%, #0a0520 100%) !important;
    min-height: 100vh;
    padding-bottom: 50px;
   }
   .btn-primary, .btn-dark {
-   background: linear-gradient(135deg, #ff9800 0%, #ff6b35 100%) !important;
-   border: none !important;
+   background: linear-gradient(135deg, #9d4edd 0%, #ff1493 100%) !important;
+   border: 2px solid #ff69b4 !important;
    color: white !important;
    font-weight: 600;
    transition: all 0.3s ease;
-   box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+   box-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
+   letter-spacing: 1px;
   }
   .btn-primary:hover, .btn-dark:hover {
-   background: linear-gradient(135deg, #ffa726 0%, #ff7043 100%) !important;
+   background: linear-gradient(135deg, #ff1493 0%, #9d4edd 100%) !important;
    transform: translateY(-2px);
-   box-shadow: 0 6px 20px rgba(255, 152, 0, 0.6);
+   box-shadow: 0 0 30px rgba(255, 105, 180, 0.8);
    color: white !important;
+   border-color: #ff1493 !important;
   }
   .btn-outline-dark {
    border-color: #ff9800 !important;
@@ -154,18 +167,20 @@
    transform: translateY(-2px);
   }
   .btn-success {
-   background: linear-gradient(135deg, #ff9800 0%, #ff6b35 100%) !important;
-   border: none !important;
+   background: linear-gradient(135deg, #ff6b35 0%, #ff1493 100%) !important;
+   border: 2px solid #ff6b35 !important;
    color: white !important;
    font-weight: 600;
    transition: all 0.3s ease;
-   box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);
+   box-shadow: 0 0 15px rgba(255, 107, 53, 0.5);
+   letter-spacing: 1px;
   }
   .btn-success:hover {
-   background: linear-gradient(135deg, #ffa726 0%, #ff7043 100%) !important;
+   background: linear-gradient(135deg, #ff1493 0%, #ff6b35 100%) !important;
    transform: translateY(-2px);
-   box-shadow: 0 6px 20px rgba(255, 152, 0, 0.6);
+   box-shadow: 0 0 25px rgba(255, 107, 53, 0.8);
    color: white !important;
+   border-color: #ff1493 !important;
   }
   .btn-outline-danger {
    transition: all 0.3s ease;
@@ -184,6 +199,21 @@
    } else if (urlParams.get('elegirNick') === 'true' && nickCookie) {
      // Si tiene cookie pero está la URL con elegirNick, limpiar la URL
      window.history.replaceState({}, document.title, '/');
+   }
+ });
+ </script>
+ 
+ <script>
+ // Detectar si debe abrir el menú NEXUS automáticamente
+ $(document).ready(function() {
+   const urlParams = new URLSearchParams(window.location.search);
+   if (urlParams.get('openMenu') === 'true') {
+     // Esperar a que cw esté inicializado
+     setTimeout(function() {
+       if (typeof cw !== 'undefined' && cw.mostrarMenuNexus) {
+         cw.mostrarMenuNexus();
+       }
+     }, 500);
    }
  });
  </script>
@@ -251,13 +281,13 @@ function handleCredentialResponse(response) {
 console.log('[OneTap Client] Función handleCredentialResponse definida:', typeof handleCredentialResponse);
 </script>
 
-<nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%); box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+<nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1a0a2e 0%, #3d1f5c 100%); box-shadow: 0 0 20px rgba(157, 78, 221, 0.5); border-bottom: 2px solid #9d4edd;">
  <div class="container">
-  <a class="navbar-brand font-weight-bold" href="#" style="font-size: 1.5rem;">
-   <img src="img/logo.png" alt="Logo" style="height: 35px; margin-right: 10px;"> UserManager
+  <a class="navbar-brand font-weight-bold" href="#" style="font-size: 1.5rem; color: #ff1493; text-shadow: 0 0 10px #ff1493; letter-spacing: 3px; font-family: 'Courier New', monospace;">
+   <img src="img/logo.png" alt="Logo" style="height: 60px; margin-right: 15px; filter: drop-shadow(0 0 10px #ff1493);"> NEXUS SYSTEM
   </a>
-  <button class="btn btn-light btn-sm ml-auto" onclick="cw.salir()" id="btnSalir" style="display: none;">
-   <i class="fas fa-sign-out-alt"></i> Salir
+  <button class="btn btn-sm ml-auto" onclick="cw.salir()" id="btnSalir" style="display: none; background: linear-gradient(135deg, #9d4edd 0%, #ff1493 100%); border: 2px solid #ff69b4; color: white; letter-spacing: 1px;">
+   <i class="fas fa-sign-out-alt"></i> SALIR
   </button>
  </div>
 </nav>
@@ -268,8 +298,8 @@ console.log('[OneTap Client] Función handleCredentialResponse definida:', typeo
   <div class="container">
    <div class="row align-items-center">
     <div class="col-lg-6 text-center text-lg-left mb-5 mb-lg-0">
-     <h1 class="display-3 font-weight-bold mb-4">¡Bienvenido a UserManager!</h1>
-     <p class="lead mb-5">La plataforma más completa y segura para gestionar usuarios. Accede de forma rápida y sencilla con tu cuenta.</p>
+     <h1 class="display-3 font-weight-bold mb-4">NEXUS PROTOCOL</h1>
+     <p class="lead mb-5">[ SISTEMA DE COMBATE TÁCTICO DE TANQUES - AUTORIZACIÓN REQUERIDA ]</p>
      <div class="d-flex flex-column flex-md-row justify-content-center justify-content-lg-start">
       <button class="btn btn-light btn-custom" onclick="cw.mostrarLoginForm()">
        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
@@ -281,43 +311,49 @@ console.log('[OneTap Client] Función handleCredentialResponse definida:', typeo
     </div>
     <div class="col-lg-6">
      <div class="text-center">
-      <img src="img/PaginaPrincipal.png" alt="UserManager" style="max-width: 100%; height: auto; max-height: 500px;">
+      <img src="img/PaginaPrincipal.png" alt="Nexus Protocol" style="max-width: 100%; height: auto; border-radius: 15px; box-shadow: 0 0 40px rgba(255,20,147,0.6), 0 0 80px rgba(157,78,221,0.4); animation: pulse 2s infinite;">
      </div>
     </div>
    </div>
   </div>
  </section>
+ <style>
+  @keyframes pulse {
+   0%, 100% { transform: scale(1); }
+   50% { transform: scale(1.1); }
+  }
+ </style>
 
  <!-- Login Form Modal -->
- <div id="loginFormSection" style="display: none; padding: 60px 0; background: #f8f9fa;">
+ <div id="loginFormSection" style="display: none; padding: 60px 0; background: linear-gradient(135deg, #1a0a2e 0%, #0a0520 100%);">
   <div class="container">
    <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
      <div class="card card-login">
       <div class="card-body p-5">
-       <h3 class="text-center mb-4"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</h3>
+       <h3 class="text-center mb-4" style="color: #ff1493; text-shadow: 0 0 15px #ff1493; letter-spacing: 3px;"><i class="fas fa-sign-in-alt"></i> INICIAR SESIÓN</h3>
        <div id="mensajeLogin" class="alert" style="display: none;"></div>
        <form id="formLogin">
         <div class="form-group">
-         <label for="emailLogin"><i class="fas fa-envelope"></i> Email:</label>
-         <input type="email" class="form-control" id="emailLogin" placeholder="tu@email.com" required>
+         <label for="emailLogin" style="color: #ff69b4; font-weight: bold;"><i class="fas fa-envelope"></i> Email:</label>
+         <input type="email" class="form-control" id="emailLogin" placeholder="tu@email.com" required style="background: rgba(26, 10, 46, 0.7); border: 1px solid #9d4edd; color: #ff69b4;">
         </div>
         <div class="form-group">
-         <label for="passwordLogin"><i class="fas fa-key"></i> Contraseña:</label>
-         <input type="password" class="form-control" id="passwordLogin" placeholder="••••••••" required>
+         <label for="passwordLogin" style="color: #ff69b4; font-weight: bold;"><i class="fas fa-key"></i> Contraseña:</label>
+         <input type="password" class="form-control" id="passwordLogin" placeholder="••••••••" required style="background: rgba(26, 10, 46, 0.7); border: 1px solid #9d4edd; color: #ff69b4;">
         </div>
-        <button type="submit" class="btn btn-primary btn-block btn-lg">Iniciar Sesión</button>
+        <button type="submit" class="btn btn-primary btn-block btn-lg">INICIAR SESIÓN</button>
        </form>
-       <hr>
-       <p class="text-center mb-3">O inicia sesión con:</p>
-       <a href="/auth/google" class="btn btn-light btn-block google-btn">
+       <hr style="border-color: #9d4edd;">
+       <p class="text-center mb-3" style="color: #9d4edd;">O inicia sesión con:</p>
+       <a href="/auth/google" class="btn btn-block google-btn" style="background: white; color: #333; border: 2px solid #9d4edd;">
         <i class="fab fa-google"></i> Continuar con Google
        </a>
        <div class="text-center mt-3">
-        <small>¿No tienes cuenta? <a href="#" onclick="cw.mostrarRegistroForm(); return false;" class="font-weight-bold">Regístrate aquí</a></small>
+        <small style="color: #9d4edd;">¿No tienes cuenta? <a href="#" onclick="cw.mostrarRegistroForm(); return false;" class="font-weight-bold" style="color: #ff1493; text-decoration: none;">Regístrate aquí</a></small>
        </div>
        <div class="text-center mt-2">
-        <button class="btn btn-link" onclick="cw.volverLanding()">
+        <button class="btn btn-link" onclick="cw.volverLanding()" style="color: #ff69b4;">
          <i class="fas fa-arrow-left"></i> Volver
         </button>
        </div>
@@ -328,40 +364,40 @@ console.log('[OneTap Client] Función handleCredentialResponse definida:', typeo
   </div>
  </div>
 
- <div id="registroFormSection" style="display: none; padding: 60px 0; background: #f8f9fa;">
+ <div id="registroFormSection" style="display: none; padding: 60px 0; background: linear-gradient(135deg, #1a0a2e 0%, #0a0520 100%);">
   <div class="container">
    <div class="row justify-content-center">
     <div class="col-md-6 col-lg-5">
      <div class="card card-login">
       <div class="card-body p-5">
-       <h3 class="text-center mb-4"><i class="fas fa-user-plus"></i> Crear Cuenta</h3>
+       <h3 class="text-center mb-4" style="color: #ff1493; text-shadow: 0 0 15px #ff1493; letter-spacing: 3px;"><i class="fas fa-user-plus"></i> CREAR CUENTA</h3>
        <div id="mensajeRegistro" class="alert" style="display: none;"></div>
        <form id="formRegistro">
         <div class="form-group">
-         <label for="nickRegistro"><i class="fas fa-user"></i> Nick (Usuario):</label>
-         <input type="text" class="form-control" id="nickRegistro" placeholder="Elige tu nick único" required>
-         <small class="form-text text-muted">3-20 caracteres: letras, números y guiones bajos</small>
+         <label for="nickRegistro" style="color: #ff69b4; font-weight: bold;"><i class="fas fa-user"></i> Nick (Usuario):</label>
+         <input type="text" class="form-control" id="nickRegistro" placeholder="Elige tu nick único" required style="background: rgba(26, 10, 46, 0.7); border: 1px solid #9d4edd; color: #ff69b4;">
+         <small class="form-text" style="color: #9d4edd;">3-20 caracteres: letras, números y guiones bajos</small>
         </div>
         <div class="form-group">
-         <label for="emailRegistro"><i class="fas fa-envelope"></i> Email:</label>
-         <input type="email" class="form-control" id="emailRegistro" placeholder="tu@email.com" required>
+         <label for="emailRegistro" style="color: #ff69b4; font-weight: bold;"><i class="fas fa-envelope"></i> Email:</label>
+         <input type="email" class="form-control" id="emailRegistro" placeholder="tu@email.com" required style="background: rgba(26, 10, 46, 0.7); border: 1px solid #9d4edd; color: #ff69b4;">
         </div>
         <div class="form-group">
-         <label for="passwordRegistro"><i class="fas fa-key"></i> Contraseña:</label>
-         <input type="password" class="form-control" id="passwordRegistro" placeholder="Mínimo 6 caracteres" required>
+         <label for="passwordRegistro" style="color: #ff69b4; font-weight: bold;"><i class="fas fa-key"></i> Contraseña:</label>
+         <input type="password" class="form-control" id="passwordRegistro" placeholder="Mínimo 6 caracteres" required style="background: rgba(26, 10, 46, 0.7); border: 1px solid #9d4edd; color: #ff69b4;">
         </div>
-        <button type="submit" class="btn btn-success btn-block btn-lg">Crear Cuenta</button>
+        <button type="submit" class="btn btn-success btn-block btn-lg">CREAR CUENTA</button>
        </form>
-       <hr>
-       <p class="text-center mb-3">O regístrate con:</p>
-       <a href="/auth/google" class="btn btn-light btn-block google-btn">
+       <hr style="border-color: #9d4edd;">
+       <p class="text-center mb-3" style="color: #9d4edd;">O regístrate con:</p>
+       <a href="/auth/google" class="btn btn-block google-btn" style="background: white; color: #333; border: 2px solid #9d4edd;">
         <i class="fab fa-google"></i> Continuar con Google
        </a>
        <div class="text-center mt-3">
-        <small>¿Ya tienes cuenta? <a href="#" onclick="cw.mostrarLoginForm(); return false;" class="font-weight-bold">Inicia sesión aquí</a></small>
+        <small style="color: #9d4edd;">¿Ya tienes cuenta? <a href="#" onclick="cw.mostrarLoginForm(); return false;" class="font-weight-bold" style="color: #ff1493; text-decoration: none;">Inicia sesión aquí</a></small>
        </div>
        <div class="text-center mt-2">
-        <button class="btn btn-link" onclick="cw.volverLanding()">
+        <button class="btn btn-link" onclick="cw.volverLanding()" style="color: #ff69b4;">
          <i class="fas fa-arrow-left"></i> Volver
         </button>
        </div>
@@ -382,40 +418,44 @@ console.log('[OneTap Client] Función handleCredentialResponse definida:', typeo
   <!-- Header section -->
   <div class="row mb-4">
    <div class="col-12 text-center">
-    <h2 class="text-dark mb-1"><i class="fas fa-gamepad"></i> Sala de Juegos</h2>
-    <p class="text-muted">Crea una partida o únete a una existente para comenzar a jugar</p>
+    <h2 class="mb-1" style="color: #ff1493; text-shadow: 0 0 15px #ff1493; letter-spacing: 5px; font-family: 'Courier New', monospace;"><i class="fas fa-gamepad"></i> TERMINAL DE COMBATE</h2>
+    <p style="color: #9d4edd; letter-spacing: 2px; font-family: 'Courier New', monospace;">[ ACCESO AL SISTEMA DE BATALLA ]</p>
    </div>
   </div>
 
   <!-- Cards para cada función -->
   <div class="row justify-content-center">
-  <!-- Crear Partida -->
-  <div class="col-md-6 col-lg-5 mb-4">
-   <div class="card h-100 shadow border-success">
-    <div class="card-body text-center">
-     <h5 class="card-title"><i class="fas fa-gamepad text-success"></i> Crear Partida</h5>
-     <p class="card-text text-muted small">Crea una nueva partida y espera un rival</p>
-     <button type="button" class="btn btn-success btn-block" onclick="mostrarFuncion('crearPartida', this)">
-      <i class="fas fa-plus-circle"></i> Crear Nueva Partida
+  
+  <!-- NEXUS PROTOCOL - Botón destacado que lleva al lobby -->
+  <div class="col-md-10 col-lg-8 mb-4">
+   <div class="card h-100 shadow" style="background: linear-gradient(135deg, #1a0a2e 0%, #3d1f5c 100%); border: 3px solid #ff69b4;">
+    <div class="card-body text-center" style="padding: 40px;">
+     <h3 class="card-title mb-3" style="color: #ff1493; font-family: 'Courier New', monospace; letter-spacing: 8px; text-shadow: 0 0 20px #ff1493, 0 0 40px #ff1493; animation: glow 2s ease-in-out infinite alternate;">
+      NEXUS PROTOCOL
+     </h3>
+     <p class="card-text mb-4" style="color: #ff6b35; font-family: 'Courier New', monospace; letter-spacing: 2px;">
+      SISTEMA DE COMBATE ACTIVADO
+     </p>
+     <button onclick="irALobby()" class="btn btn-lg" style="background: linear-gradient(135deg, #9d4edd 0%, #ff1493 100%); border: 2px solid #ff69b4; color: #fff; padding: 15px 50px; font-family: 'Courier New', monospace; letter-spacing: 3px; transition: all 0.3s; box-shadow: 0 0 20px rgba(255, 105, 180, 0.5); cursor: pointer;">
+      <i class="fas fa-gamepad"></i> ENTRAR AL LOBBY
      </button>
-     <div id="result-crearPartida" class="mt-3"></div>
     </div>
    </div>
   </div>
-
-  <!-- Unirse a Partida -->
-  <div class="col-md-6 col-lg-5 mb-4">
-   <div class="card h-100 shadow border-info">
-    <div class="card-body text-center">
-     <h5 class="card-title"><i class="fas fa-users text-info"></i> Unirse a Partida</h5>
-     <p class="card-text text-muted small">Ve las partidas disponibles y únete a una</p>
-     <button type="button" class="btn btn-info btn-block" onclick="mostrarFuncion('unirsePartida', this)">
-      <i class="fas fa-list"></i> Ver Partidas Disponibles
-     </button>
-     <div id="result-unirsePartida" class="mt-3"></div>
-    </div>
-   </div>
-  </div>
+  
+  <script>
+  function irALobby() {
+    console.log('Intentando ir al lobby...');
+    window.location.href = '/lobby';
+  }
+  </script>
+  
+  <style>
+  @keyframes glow {
+    from { text-shadow: 0 0 20px #ff1493, 0 0 30px #ff1493; }
+    to { text-shadow: 0 0 30px #ff1493, 0 0 60px #ff1493, 0 0 80px #ff69b4; }
+  }
+  </style>
  </div>
 
  <!-- Área de trabajo oculta -->

@@ -304,6 +304,79 @@ app.get('/logout', function(req, res) {
     });
 });
 
+// Ruta para acceder al juego directo
+app.get('/juego', haIniciado, function(request, response) {
+    var contenido = fs.readFileSync(__dirname + "/Cliente/game.html");
+    response.setHeader("Content-type", "text/html");
+    response.send(contenido);
+});
+
+// Ruta para acceder al lobby
+app.get('/lobby', haIniciado, function(request, response) {
+    var contenido = fs.readFileSync(__dirname + "/Cliente/lobby.html");
+    response.setHeader("Content-type", "text/html");
+    response.send(contenido);
+});
+
+// Ruta para acceder a NEXUS PROTOCOL
+app.get('/nexus', haIniciado, function(request, response) {
+    var contenido = fs.readFileSync(__dirname + "/Cliente/nexus.html");
+    response.setHeader("Content-type", "text/html");
+    response.send(contenido);
+});
+
+// API: Obtener partidas disponibles
+app.get('/partidasDisponibles', haIniciado, function(request, response) {
+    const partidas = sistema.obtenerPartidasDisponibles();
+    response.json({ partidas: partidas });
+});
+
+// API: Crear partida
+app.post('/crearPartida', haIniciado, function(request, response) {
+    const { modo, nombre } = request.body;
+    const usuario = request.user;
+    
+    const partidaCreada = sistema.crearPartidaMultijugador({
+        modo: modo,
+        nombre: nombre,
+        jugador: {
+            email: usuario.email,
+            nick: usuario.nick
+        }
+    });
+    
+    if (partidaCreada) {
+        response.json({ ok: true, codigo: partidaCreada.codigo });
+    } else {
+        response.status(500).json({ ok: false, error: 'No se pudo crear la partida' });
+    }
+});
+
+// API: Unirse a partida
+app.post('/unirsePartida', haIniciado, function(request, response) {
+    const { codigo } = request.body;
+    const usuario = request.user;
+    
+    const resultado = sistema.unirseAPartida(codigo, {
+        email: usuario.email,
+        nick: usuario.nick
+    });
+    
+    response.json(resultado);
+});
+
+// Ruta para obtener el usuario actual
+app.get('/obtenerUsuarioActual', function(request, response) {
+    if (request.user) {
+        response.json({
+            email: request.user.email,
+            nick: request.user.nick
+        });
+    } else {
+        response.json({email: null, nick: null});
+    }
+});
+
 // Servir archivos estáticos desde la carpeta Cliente (al final para que no interfiera con las rutas API)
 app.use(express.static(__dirname + "/Cliente"));
 
