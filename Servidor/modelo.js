@@ -342,7 +342,7 @@ function Partida(codigo){
 
 // Métodos para gestión de partidas multijugador
 Sistema.prototype.crearPartidaMultijugador = function(datos) {
-  const codigo = 'GAME_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  const codigo = 'game_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
   const partida = new Partida(codigo);
   
   partida.modo = datos.modo || 'individual';
