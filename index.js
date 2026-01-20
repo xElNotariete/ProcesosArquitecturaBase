@@ -341,6 +341,8 @@ app.post('/crearPartida', haIniciado, function(request, response) {
     const { modo, nombre } = request.body;
     const usuario = request.user;
     
+    console.log('[API crearPartida] Usuario:', usuario.nick, 'Modo:', modo);
+    
     const partidaCreada = sistema.crearPartidaMultijugador({
         modo: modo,
         nombre: nombre,
@@ -349,6 +351,9 @@ app.post('/crearPartida', haIniciado, function(request, response) {
             nick: usuario.nick
         }
     });
+    
+    console.log('[API crearPartida] Partida creada:', partidaCreada ? partidaCreada.codigo : 'ERROR');
+    console.log('[API crearPartida] Partidas en sistema:', Object.keys(sistema.partidas));
     
     if (partidaCreada) {
         response.json({ ok: true, codigo: partidaCreada.codigo });
