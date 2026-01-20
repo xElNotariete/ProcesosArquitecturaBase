@@ -384,8 +384,9 @@ app.get('/obtenerUsuarioActual', function(request, response) {
 
 // API: Verificar si una partida existe
 app.get('/verificarPartida/:codigo', function(request, response) {
-    const codigo = request.params.codigo;
-    console.log('[API verificarPartida] Verificando partida:', codigo);
+    const codigoOriginal = request.params.codigo;
+    const codigo = codigoOriginal.toLowerCase(); // Normalizar a minúsculas
+    console.log('[API verificarPartida] Código recibido:', codigoOriginal, '-> normalizado:', codigo);
     console.log('[API verificarPartida] Partidas en sistema:', Object.keys(sistema.partidas));
     
     const partida = sistema.partidas[codigo];
