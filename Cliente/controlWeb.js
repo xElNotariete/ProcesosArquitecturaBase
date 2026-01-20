@@ -919,7 +919,7 @@ function ControlWeb() {
     setTimeout(() => $("#inputCodigoPartida").focus(), 300);
     
     $("#btnConfirmarUnirse").on("click", function() {
-      const codigo = $("#inputCodigoPartida").val().trim().toUpperCase();
+      const codigo = $("#inputCodigoPartida").val().trim().toLowerCase(); // Siempre minúsculas
       if (!codigo) {
         $("#inputCodigoPartida").css('border-color', '#ff0000').addClass('shake');
         setTimeout(() => $("#inputCodigoPartida").css('border-color', '#ff1493').removeClass('shake'), 500);

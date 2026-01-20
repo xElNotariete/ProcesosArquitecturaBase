@@ -52,8 +52,9 @@ function ServidorWS(){
 			
 			// Nuevo evento: Unirse a partida multijugador (para sala de espera)
 			socket.on("unirsePartida", function(datos) {
-				console.log("[servidorWS] Jugador intentando unirse a partida:", datos.codigo, "con nick:", datos.nick);
-				const partida = sistema.partidas[datos.codigo];
+				const codigoBuscado = datos.codigo.toLowerCase(); // Normalizar a minúsculas
+				console.log("[servidorWS] Jugador intentando unirse a partida:", codigoBuscado, "con nick:", datos.nick);
+				const partida = sistema.partidas[codigoBuscado];
 				
 				if (!partida) {
 					yo.enviarAlRemitente(socket, "error", {mensaje: "Partida no encontrada"});
@@ -94,11 +95,11 @@ function ServidorWS(){
 				}
 				
 				// Unir socket a la sala
-				socket.join(datos.codigo);
+				socket.join(codigoBuscado);
 				console.log("[servidorWS] Jugador unido. Total en partida:", partida.jugadores.length + "/" + partida.maxJug);
 				
 				// Enviar actualización a todos en la sala
-				io.to(datos.codigo).emit("partidaActualizada", {
+				io.to(codigoBuscado).emit("partidaActualizada", {
 					codigo: partida.codigo,
 					modo: partida.modo,
 					jugadores: partida.jugadores,
@@ -114,7 +115,7 @@ function ServidorWS(){
 					
 					// Pequeño delay para que todos vean la pantalla completa
 					setTimeout(() => {
-						io.to(datos.codigo).emit("partidaIniciada", {
+						io.to(codigoBuscado).emit("partidaIniciada", {
 							codigo: partida.codigo,
 							modo: partida.modo,
 							jugadores: partida.jugadores
