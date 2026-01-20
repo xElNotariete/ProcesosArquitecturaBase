@@ -1335,6 +1335,40 @@ TankBattle.prototype.dibujar = function() {
             const jugRemoto = this.jugadoresRemoto[socketId];
             if (!jugRemoto || jugRemoto.vida <= 0) continue;
             
+            // Determinar color y estilo según tipo de tanque
+            const tipoTanque = jugRemoto.tanque || 'equilibrado';
+            let colorTanque, tamañoCuerpo, anchoOrugas, longitudCañon, radioTorreta;
+            
+            switch(tipoTanque) {
+                case 'rapido': // PHANTOM
+                    colorTanque = '#ff1493';
+                    tamañoCuerpo = 36;
+                    anchoOrugas = 5;
+                    longitudCañon = 15;
+                    radioTorreta = 12;
+                    break;
+                case 'pesado': // JUGGERNAUT
+                    colorTanque = '#9d4edd';
+                    tamañoCuerpo = 44;
+                    anchoOrugas = 9;
+                    longitudCañon = 20;
+                    radioTorreta = 16;
+                    break;
+                case 'francotirador': // STRIKER
+                    colorTanque = '#ff69b4';
+                    tamañoCuerpo = 40;
+                    anchoOrugas = 6;
+                    longitudCañon = 28;
+                    radioTorreta = 14;
+                    break;
+                default: // SHADOW (equilibrado)
+                    colorTanque = '#ff6b35';
+                    tamañoCuerpo = 40;
+                    anchoOrugas = 7;
+                    longitudCañon = 18;
+                    radioTorreta = 14;
+            }
+            
             ctx.save();
             ctx.translate(jugRemoto.x, jugRemoto.y);
             
@@ -1343,24 +1377,55 @@ TankBattle.prototype.dibujar = function() {
             const angulo = angulos[jugRemoto.direccion || 0];
             ctx.rotate(angulo);
             
-            // Dibujar tanque remoto
-            ctx.fillStyle = jugRemoto.color || '#ff6b35';
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
+            // Sombra del tanque
+            ctx.shadowColor = colorTanque;
+            ctx.shadowBlur = 15;
             
-            // Cuerpo del tanque
-            ctx.fillRect(-20, -15, 40, 30);
-            ctx.strokeRect(-20, -15, 40, 30);
+            // Cuerpo principal del tanque
+            ctx.fillStyle = colorTanque;
+            ctx.fillRect(-tamañoCuerpo/2 + 3, -tamañoCuerpo/2 + 5, tamañoCuerpo - 6, tamañoCuerpo - 10);
+            
+            // Orugas
+            ctx.fillStyle = '#2a2a2a';
+            ctx.fillRect(-tamañoCuerpo/2, -tamañoCuerpo/2 + 3, tamañoCuerpo, anchoOrugas);
+            ctx.fillRect(-tamañoCuerpo/2, tamañoCuerpo/2 - anchoOrugas - 3, tamañoCuerpo, anchoOrugas);
+            
+            // Detalles de las orugas
+            ctx.fillStyle = '#1a1a1a';
+            for (let i = -tamañoCuerpo/2; i < tamañoCuerpo/2; i += 8) {
+                ctx.fillRect(i, -tamañoCuerpo/2 + 4, 6, anchoOrugas - 2);
+                ctx.fillRect(i, tamañoCuerpo/2 - anchoOrugas - 2, 6, anchoOrugas - 2);
+            }
+            
+            // Borde del cuerpo
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 0;
+            ctx.strokeRect(-tamañoCuerpo/2 + 3, -tamañoCuerpo/2 + 5, tamañoCuerpo - 6, tamañoCuerpo - 10);
             
             // Torreta
+            ctx.fillStyle = colorTanque;
+            ctx.shadowColor = colorTanque;
+            ctx.shadowBlur = 10;
             ctx.beginPath();
-            ctx.arc(0, 0, 12, 0, Math.PI * 2);
+            ctx.arc(0, 0, radioTorreta, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 0;
             ctx.stroke();
             
-            // Cañón
-            ctx.fillRect(0, -4, 25, 8);
-            ctx.strokeRect(0, -4, 25, 8);
+            // Cañón principal
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, -4, longitudCañon, 8);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, -3, longitudCañon - 2, 3);
+            
+            // Cúpula superior
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fill();
             
             ctx.restore();
             
@@ -1374,12 +1439,17 @@ TankBattle.prototype.dibujar = function() {
             ctx.fillText(jugRemoto.nick || 'Jugador', jugRemoto.x, jugRemoto.y - 35);
             
             // Barra de vida
+            const vidaMax = tipoTanque === 'pesado' ? 5 : (tipoTanque === 'rapido' ? 2 : 3);
             const anchoVida = 40;
-            const altoVida = 5;
-            ctx.fillStyle = '#333';
+            const altoVida = 6;
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
             ctx.fillRect(jugRemoto.x - anchoVida/2, jugRemoto.y - 28, anchoVida, altoVida);
-            ctx.fillStyle = jugRemoto.vida > 1 ? '#00ff00' : '#ff0000';
-            ctx.fillRect(jugRemoto.x - anchoVida/2, jugRemoto.y - 28, anchoVida * (jugRemoto.vida / 3), altoVida);
+            const porcentaje = Math.max(0, jugRemoto.vida / vidaMax);
+            ctx.fillStyle = porcentaje > 0.5 ? '#00ff00' : porcentaje > 0.25 ? '#ffaa00' : '#ff0000';
+            ctx.fillRect(jugRemoto.x - anchoVida/2 + 1, jugRemoto.y - 28 + 1, (anchoVida - 2) * porcentaje, altoVida - 2);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(jugRemoto.x - anchoVida/2, jugRemoto.y - 28, anchoVida, altoVida);
             ctx.shadowBlur = 0;
             ctx.restore();
         }
