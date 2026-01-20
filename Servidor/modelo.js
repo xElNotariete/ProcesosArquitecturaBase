@@ -363,6 +363,8 @@ Sistema.prototype.crearPartidaMultijugador = function(datos) {
   this.partidas[codigo] = partida;
   
   console.log('[Sistema] Partida creada:', codigo, 'Modo:', partida.modo, 'Creador:', datos.jugador.nick);
+  console.log('[Sistema] Total partidas en sistema:', Object.keys(this.partidas).length);
+  console.log('[Sistema] Códigos de partidas:', Object.keys(this.partidas));
   return partida;
 };
 

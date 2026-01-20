@@ -336,6 +336,8 @@ app.post('/crearPartida', haIniciado, function(request, response) {
     const { modo, nombre } = request.body;
     const usuario = request.user;
     
+    console.log('[API crearPartida] Usuario:', usuario.nick, 'Modo:', modo);
+    
     const partidaCreada = sistema.crearPartidaMultijugador({
         modo: modo,
         nombre: nombre,
@@ -346,8 +348,11 @@ app.post('/crearPartida', haIniciado, function(request, response) {
     });
     
     if (partidaCreada) {
+        console.log('[API crearPartida] Partida creada exitosamente:', partidaCreada.codigo);
+        console.log('[API crearPartida] Partidas en sistema:', Object.keys(sistema.partidas));
         response.json({ ok: true, codigo: partidaCreada.codigo });
     } else {
+        console.error('[API crearPartida] Error al crear partida');
         response.status(500).json({ ok: false, error: 'No se pudo crear la partida' });
     }
 });
@@ -374,6 +379,29 @@ app.get('/obtenerUsuarioActual', function(request, response) {
         });
     } else {
         response.json({email: null, nick: null});
+    }
+});
+
+// API: Verificar si una partida existe
+app.get('/verificarPartida/:codigo', function(request, response) {
+    const codigo = request.params.codigo;
+    console.log('[API verificarPartida] Verificando partida:', codigo);
+    console.log('[API verificarPartida] Partidas en sistema:', Object.keys(sistema.partidas));
+    
+    const partida = sistema.partidas[codigo];
+    if (partida) {
+        console.log('[API verificarPartida] Partida encontrada:', partida.codigo, 'Estado:', partida.estado);
+        response.json({
+            existe: true,
+            codigo: partida.codigo,
+            estado: partida.estado,
+            modo: partida.modo,
+            jugadores: partida.jugadores.length,
+            maxJug: partida.maxJug
+        });
+    } else {
+        console.log('[API verificarPartida] Partida NO encontrada');
+        response.json({ existe: false });
     }
 });
 
