@@ -898,7 +898,7 @@ function ControlWeb() {
     cadena += '<label style="color: #ff69b4; font-size: 22px; display: block; margin-bottom: 20px; letter-spacing: 3px; text-shadow: 0 0 10px #ff69b4;">CÓDIGO DE PARTIDA</label>';
     cadena += '</div>';
     
-    cadena += '<input type="text" id="inputCodigoPartida" placeholder="GAME-XXXXX" style="width: 100%; padding: 20px 25px; font-size: 28px; background: rgba(26,10,46,0.95); border: 3px solid #ff1493; border-radius: 12px; color: #ff6b35; text-align: center; letter-spacing: 5px; font-family: \'Courier New\', monospace; margin-bottom: 30px; box-shadow: inset 0 0 20px rgba(255,20,147,0.3), 0 0 20px rgba(255,20,147,0.4); transition: all 0.3s; text-transform: uppercase;" />';
+    cadena += '<input type="text" id="inputCodigoPartida" placeholder="game_xxxxx" style="width: 100%; padding: 20px 25px; font-size: 28px; background: rgba(26,10,46,0.95); border: 3px solid #ff1493; border-radius: 12px; color: #ff6b35; text-align: center; letter-spacing: 5px; font-family: \'Courier New\', monospace; margin-bottom: 30px; box-shadow: inset 0 0 20px rgba(255,20,147,0.3), 0 0 20px rgba(255,20,147,0.4); transition: all 0.3s;" />';
     
     cadena += '<button class="nexus-btn" id="btnConfirmarUnirse" style="width: 100%; font-size: 24px; padding: 18px; letter-spacing: 4px; background: linear-gradient(135deg, #9d4edd 0%, #ff1493 100%); border: none; box-shadow: 0 0 30px rgba(157,78,221,0.6);">🚀 UNIRSE AHORA</button>';
     cadena += '</div>';
