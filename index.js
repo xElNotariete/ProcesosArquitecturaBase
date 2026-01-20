@@ -56,7 +56,12 @@ const haIniciado=function(request,response,next){
 		next();
 	}
 	else{
-		response.redirect("/")
+		// Si es una petición API (JSON), devolver error JSON
+		if (request.xhr || request.headers.accept?.indexOf('json') > -1 || request.headers['content-type']?.indexOf('json') > -1) {
+			response.status(401).json({ error: 'No autorizado', mensaje: 'Debes iniciar sesión' });
+		} else {
+			response.redirect("/");
+		}
 	}
 }
 

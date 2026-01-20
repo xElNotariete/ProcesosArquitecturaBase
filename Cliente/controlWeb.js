@@ -1280,12 +1280,18 @@ function ControlWeb() {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // Importante para enviar cookies de sesión
         body: JSON.stringify({
           modo: modo,
           nombre: 'Partida de ' + modo
         })
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('No autorizado o error del servidor');
+        }
+        return res.json();
+      })
       .then(data => {
         if (data.ok && data.codigo) {
           window.location.href = '/juego?codigo=' + data.codigo + '&tanque=' + tipoTanque + '&modo=' + modo;
