@@ -54,9 +54,11 @@ function ServidorWS(){
 			socket.on("unirsePartida", function(datos) {
 				const codigoBuscado = datos.codigo.toLowerCase(); // Normalizar a minúsculas
 				console.log("[servidorWS] Jugador intentando unirse a partida:", codigoBuscado, "con nick:", datos.nick);
+				console.log("[servidorWS] Partidas disponibles:", Object.keys(sistema.partidas));
 				const partida = sistema.partidas[codigoBuscado];
 				
 				if (!partida) {
+					console.log("[servidorWS] Partida NO encontrada. Código buscado:", codigoBuscado);
 					yo.enviarAlRemitente(socket, "error", {mensaje: "Partida no encontrada"});
 					return;
 				}
