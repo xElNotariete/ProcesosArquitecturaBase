@@ -1288,11 +1288,11 @@ function ControlWeb() {
       .then(res => res.json())
       .then(data => {
         if (data.ok && data.codigo) {
-          console.log('[ControlWeb] Partida creada con código:', data.codigo);
-          // Pequeño delay para asegurar que el servidor procese completamente
-          setTimeout(() => {
-            window.location.href = '/juego?codigo=' + data.codigo + '&tanque=' + tipoTanque + '&modo=' + modo;
-          }, 200);
+          console.log('[ControlWeb] Partida creada exitosamente');
+          console.log('[ControlWeb] Código:', data.codigo);
+          console.log('[ControlWeb] Redirigiendo a juego...');
+          // Redirigir inmediatamente
+          window.location.href = '/juego?codigo=' + data.codigo + '&tanque=' + tipoTanque + '&modo=' + modo;
         } else {
           alert('Error al crear partida');
           cw.mostrarMenuNexus();

@@ -362,39 +362,46 @@
         // Función principal de inicialización
         function inicializarJuego() {
             console.log('[Game] Iniciando juego...');
+            console.log('[Game] Modo:', modo, 'Código:', codigoPartida);
             
             // Si es modo individual, iniciar directamente
             if (modo === 'individual') {
+                console.log('[Game] Modo individual - iniciando directamente');
                 document.getElementById('loading').style.display = 'none';
                 iniciarJuegoReal({ modo: 'individual', jugadores: [] });
             } 
             // Si es multijugador, verificar que la partida existe primero
             else if (codigoPartida) {
-                console.log('[Game] Modo multijugador - verificando partida...');
+                console.log('[Game] Modo multijugador - código:', codigoPartida);
+                console.log('[Game] Verificando si partida existe...');
                 
                 // Primero verificar si la partida existe
                 fetch('/verificarPartida/' + codigoPartida)
                     .then(res => res.json())
                     .then(data => {
-                        console.log('[Game] Verificación de partida:', data);
+                        console.log('[Game] Respuesta verificación:', data);
                         
                         if (!data.existe) {
-                            console.error('[Game] La partida no existe en el servidor');
-                            alert('Error: La partida no existe o ha expirado');
+                            console.error('[Game] ERROR: La partida no existe en el servidor');
+                            alert('Error: La partida ' + codigoPartida + ' no existe o ha expirado');
                             window.location.href = '/lobby';
                             return;
                         }
                         
-                        console.log('[Game] Partida verificada - conectando WebSocket...');
+                        console.log('[Game] ✓ Partida encontrada - Estado:', data.estado);
+                        console.log('[Game] Conectando WebSocket...');
                         conectarWebSocket();
                     })
                     .catch(err => {
-                        console.error('[Game] Error verificando partida:', err);
-                        alert('Error al verificar la partida');
+                        console.error('[Game] ERROR verificando partida:', err);
+                        alert('Error de conexión al verificar la partida');
                         window.location.href = '/lobby';
                     });
+            } else {
+                console.error('[Game] ERROR: Modo multijugador pero sin código de partida');
+                alert('Error: No se proporcionó código de partida');
+                window.location.href = '/lobby';
             }
-            
         }
         
         // Función para conectar WebSocket (separada para mejor control)
