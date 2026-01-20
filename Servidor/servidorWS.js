@@ -50,16 +50,12 @@ function ServidorWS(){
 				}
 			});
 			
-			// Evento: Unirse a partida multijugador (para sala de espera)
+			// Nuevo evento: Unirse a partida multijugador (para sala de espera)
 			socket.on("unirsePartida", function(datos) {
-				const codigoNormalizado = datos.codigo.toLowerCase(); // Normalizar a minúsculas
-				console.log("[servidorWS] Jugador intentando unirse a partida:", datos.codigo, "-> normalizado:", codigoNormalizado, "con nick:", datos.nick);
-				console.log("[servidorWS] Partidas disponibles:", Object.keys(sistema.partidas));
-				const partida = sistema.partidas[codigoNormalizado];
+				console.log("[servidorWS] Jugador intentando unirse a partida:", datos.codigo, "con nick:", datos.nick);
+				const partida = sistema.partidas[datos.codigo];
 				
 				if (!partida) {
-					console.log("[servidorWS] ERROR: Partida no encontrada. Código buscado:", codigoNormalizado);
-					console.log("[servidorWS] Códigos existentes:", Object.keys(sistema.partidas));
 					yo.enviarAlRemitente(socket, "error", {mensaje: "Partida no encontrada"});
 					return;
 				}
@@ -98,11 +94,11 @@ function ServidorWS(){
 				}
 				
 				// Unir socket a la sala
-				socket.join(codigoNormalizado);
+				socket.join(datos.codigo);
 				console.log("[servidorWS] Jugador unido. Total en partida:", partida.jugadores.length + "/" + partida.maxJug);
 				
 				// Enviar actualización a todos en la sala
-				io.to(codigoNormalizado).emit("partidaActualizada", {
+				io.to(datos.codigo).emit("partidaActualizada", {
 					codigo: partida.codigo,
 					modo: partida.modo,
 					jugadores: partida.jugadores,
@@ -118,7 +114,7 @@ function ServidorWS(){
 					
 					// Pequeño delay para que todos vean la pantalla completa
 					setTimeout(() => {
-						io.to(codigoNormalizado).emit("partidaIniciada", {
+						io.to(datos.codigo).emit("partidaIniciada", {
 							codigo: partida.codigo,
 							modo: partida.modo,
 							jugadores: partida.jugadores
@@ -128,17 +124,12 @@ function ServidorWS(){
 			});
 			
 			socket.on("obtenerPartidasDisponibles",function(datos){
-				console.log("[servidorWS] Obteniendo partidas disponibles...");
-				console.log("[servidorWS] Total partidas en sistema:", Object.keys(sistema.partidas).length);
 				const lista = sistema.obtenerPartidasDisponibles();
-				console.log("[servidorWS] Partidas filtradas (disponibles):", lista.length);
 				// Convertir array a objeto con código como clave
 				const partidasObj = {};
 				lista.forEach(p => {
-					console.log("[servidorWS] Partida disponible:", p.codigo, "Estado:", p.estado || "sin estado");
-					partidasObj[p.codigo] = {owner: p.emailCreador || (p.jugadores && p.jugadores[0] && p.jugadores[0].nick)};
+					partidasObj[p.codigo] = {owner: p.emailCreador};
 				});
-				console.log("[servidorWS] Enviando partidas:", Object.keys(partidasObj));
 				yo.enviarAlRemitente(socket,"partidasDisponibles",{partidas:partidasObj});
 			});
 			
