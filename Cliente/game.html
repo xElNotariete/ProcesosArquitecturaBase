@@ -401,67 +401,64 @@
         // Función para conectar WebSocket (separada para mejor control)
         function conectarWebSocket() {
             ws = io();
-                
-                // Evento: Error de conexión
-                ws.on('connect_error', function(err) {
-                    console.error('[WS] Error de conexión:', err);
-                    document.getElementById('loading').innerHTML = '<div class="spinner"></div><div style="color:#ff0000;">Error de conexión al servidor</div>';
-                });
-                
-                // Evento: Conectado
-                ws.on('connect', function() {
-                    console.log('[WS] Conectado al servidor');
-                    
-                    // Unirse a la sala de la partida
-                    console.log('[WS] Emitiendo unirsePartida con:', {
-                        codigo: codigoPartida,
-                        tanque: tanque,
-                        nick: usuarioActual ? usuarioActual.nick : 'Jugador'
-                    });
-                    
-                    ws.emit('unirsePartida', {
-                        codigo: codigoPartida,
-                        tanque: tanque,
-                        nick: usuarioActual ? usuarioActual.nick : 'Jugador'
-                    });
-                });
-                
-                // Evento: Información de la partida actualizada
-                ws.on('partidaActualizada', function(data) {
-                    console.log('[WS] Partida actualizada:', data);
-                    partidaInfo = data;
-                    actualizarListaJugadores(data.jugadores);
-                    
-                    // Mostrar sala de espera si no está ya visible
-                    if (document.getElementById('waitingRoom').style.display === 'none') {
-                        mostrarSalaEspera();
-                    }
-                });
-                
-                // Evento: Partida lista para iniciar
-                ws.on('partidaIniciada', function(data) {
-                    console.log('[WS] ¡Partida iniciada!', data);
-                    iniciarJuegoReal(data);
-                });
-                
-                // Evento: Error
-                ws.on('error', function(data) {
-                    console.error('[WS] Error:', data);
-                    alert('Error: ' + (data.mensaje || 'Error desconocido'));
-                    window.location.href = '/lobby';
-                });
-                
-                // Timeout de seguridad: si no se muestra nada en 3 segundos, mostrar sala
-                setTimeout(() => {
-                    if (document.getElementById('loading').style.display !== 'none' && 
-                        document.getElementById('waitingRoom').style.display === 'none') {
-                        console.log('[Game] Timeout - mostrando sala de espera');
-                        mostrarSalaEspera();
-                    }
-                }, 3000);
-            }
             
-            console.log('[Game] Inicialización completa');
+            // Evento: Error de conexión
+            ws.on('connect_error', function(err) {
+                console.error('[WS] Error de conexión:', err);
+                document.getElementById('loading').innerHTML = '<div class="spinner"></div><div style="color:#ff0000;">Error de conexión al servidor</div>';
+            });
+            
+            // Evento: Conectado
+            ws.on('connect', function() {
+                console.log('[WS] Conectado al servidor');
+                
+                // Unirse a la sala de la partida
+                console.log('[WS] Emitiendo unirsePartida con:', {
+                    codigo: codigoPartida,
+                    tanque: tanque,
+                    nick: usuarioActual ? usuarioActual.nick : 'Jugador'
+                });
+                
+                ws.emit('unirsePartida', {
+                    codigo: codigoPartida,
+                    tanque: tanque,
+                    nick: usuarioActual ? usuarioActual.nick : 'Jugador'
+                });
+            });
+            
+            // Evento: Información de la partida actualizada
+            ws.on('partidaActualizada', function(data) {
+                console.log('[WS] Partida actualizada:', data);
+                partidaInfo = data;
+                actualizarListaJugadores(data.jugadores);
+                
+                // Mostrar sala de espera si no está ya visible
+                if (document.getElementById('waitingRoom').style.display === 'none') {
+                    mostrarSalaEspera();
+                }
+            });
+            
+            // Evento: Partida lista para iniciar
+            ws.on('partidaIniciada', function(data) {
+                console.log('[WS] ¡Partida iniciada!', data);
+                iniciarJuegoReal(data);
+            });
+            
+            // Evento: Error
+            ws.on('error', function(data) {
+                console.error('[WS] Error:', data);
+                alert('Error: ' + (data.mensaje || 'Error desconocido'));
+                window.location.href = '/lobby';
+            });
+            
+            // Timeout de seguridad: si no se muestra nada en 3 segundos, mostrar sala
+            setTimeout(() => {
+                if (document.getElementById('loading').style.display !== 'none' && 
+                    document.getElementById('waitingRoom').style.display === 'none') {
+                    console.log('[Game] Timeout - mostrando sala de espera');
+                    mostrarSalaEspera();
+                }
+            }, 3000);
         }
         
         // Obtener usuario actual y luego inicializar
