@@ -50,12 +50,15 @@ function ServidorWS(){
 				}
 			});
 			
-			// Nuevo evento: Unirse a partida multijugador (para sala de espera)
+			// Evento: Unirse a partida multijugador (para sala de espera)
 			socket.on("unirsePartida", function(datos) {
 				console.log("[servidorWS] Jugador intentando unirse a partida:", datos.codigo, "con nick:", datos.nick);
+				console.log("[servidorWS] Partidas disponibles:", Object.keys(sistema.partidas));
 				const partida = sistema.partidas[datos.codigo];
 				
 				if (!partida) {
+					console.log("[servidorWS] ERROR: Partida no encontrada. Código buscado:", datos.codigo);
+					console.log("[servidorWS] Códigos existentes:", Object.keys(sistema.partidas));
 					yo.enviarAlRemitente(socket, "error", {mensaje: "Partida no encontrada"});
 					return;
 				}
@@ -124,12 +127,17 @@ function ServidorWS(){
 			});
 			
 			socket.on("obtenerPartidasDisponibles",function(datos){
+				console.log("[servidorWS] Obteniendo partidas disponibles...");
+				console.log("[servidorWS] Total partidas en sistema:", Object.keys(sistema.partidas).length);
 				const lista = sistema.obtenerPartidasDisponibles();
+				console.log("[servidorWS] Partidas filtradas (disponibles):", lista.length);
 				// Convertir array a objeto con código como clave
 				const partidasObj = {};
 				lista.forEach(p => {
-					partidasObj[p.codigo] = {owner: p.emailCreador};
+					console.log("[servidorWS] Partida disponible:", p.codigo, "Estado:", p.estado || "sin estado");
+					partidasObj[p.codigo] = {owner: p.emailCreador || (p.jugadores && p.jugadores[0] && p.jugadores[0].nick)};
 				});
+				console.log("[servidorWS] Enviando partidas:", Object.keys(partidasObj));
 				yo.enviarAlRemitente(socket,"partidasDisponibles",{partidas:partidasObj});
 			});
 			
