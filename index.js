@@ -385,12 +385,21 @@ app.get('/obtenerUsuarioActual', function(request, response) {
 // API: Verificar si una partida existe
 app.get('/verificarPartida/:codigo', function(request, response) {
     const codigo = request.params.codigo;
-    console.log('[API verificarPartida] Verificando partida:', codigo);
-    console.log('[API verificarPartida] Partidas en sistema:', Object.keys(sistema.partidas));
+    console.log('[API verificarPartida] ========== INICIO ==========');
+    console.log('[API verificarPartida] Código solicitado:', codigo);
+    console.log('[API verificarPartida] Tipo:', typeof codigo);
+    console.log('[API verificarPartida] Total partidas en sistema:', Object.keys(sistema.partidas).length);
+    console.log('[API verificarPartida] Códigos existentes:', Object.keys(sistema.partidas));
     
     const partida = sistema.partidas[codigo];
+    console.log('[API verificarPartida] Búsqueda directa resultado:', partida ? 'ENCONTRADA' : 'NO ENCONTRADA');
+    
     if (partida) {
-        console.log('[API verificarPartida] Partida encontrada:', partida.codigo, 'Estado:', partida.estado);
+        console.log('[API verificarPartida] ✓ Partida encontrada');
+        console.log('[API verificarPartida]   - Código:', partida.codigo);
+        console.log('[API verificarPartida]   - Estado:', partida.estado);
+        console.log('[API verificarPartida]   - Modo:', partida.modo);
+        console.log('[API verificarPartida]   - Jugadores:', partida.jugadores.length);
         response.json({
             existe: true,
             codigo: partida.codigo,
@@ -400,9 +409,14 @@ app.get('/verificarPartida/:codigo', function(request, response) {
             maxJug: partida.maxJug
         });
     } else {
-        console.log('[API verificarPartida] Partida NO encontrada');
+        console.log('[API verificarPartida] ✗ Partida NO encontrada');
+        console.log('[API verificarPartida] Comparando códigos:');
+        Object.keys(sistema.partidas).forEach(key => {
+            console.log('[API verificarPartida]   -', key, '===', codigo, '?', key === codigo);
+        });
         response.json({ existe: false });
     }
+    console.log('[API verificarPartida] ========== FIN ==========');
 });
 
 // Servir archivos estáticos desde la carpeta Cliente (al final para que no interfiera con las rutas API)
