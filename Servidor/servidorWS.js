@@ -105,7 +105,8 @@ function ServidorWS(){
 					codigo: partida.codigo,
 					modo: partida.modo,
 					jugadores: partida.jugadores,
-					maxJug: partida.maxJug
+					maxJug: partida.maxJug,
+					semillaMapa: partida.semillaMapa
 				});
 				
 				// Si la partida está completa, iniciarla
@@ -120,9 +121,86 @@ function ServidorWS(){
 						io.to(codigoBuscado).emit("partidaIniciada", {
 							codigo: partida.codigo,
 							modo: partida.modo,
-							jugadores: partida.jugadores
+							jugadores: partida.jugadores,
+							semillaMapa: partida.semillaMapa
 						});
 					}, 1000);
+				}
+			});
+			
+			// Manejar actualización de posición de jugador
+			socket.on("actualizarPosicion", function(datos) {
+				const codigo = datos.codigo ? datos.codigo.toLowerCase() : null;
+				if (!codigo) return;
+				
+				const partida = sistema.partidas[codigo];
+				if (!partida) return;
+				
+				// Encontrar jugador por socketId
+				const jugador = partida.jugadores.find(j => j.socketId === socket.id);
+				if (jugador) {
+					jugador.x = datos.x;
+					jugador.y = datos.y;
+					jugador.direccion = datos.direccion;
+					jugador.vida = datos.vida;
+				}
+				
+				// Retransmitir a todos los demás en la sala
+				socket.to(codigo).emit("jugadorMovio", {
+					socketId: socket.id,
+					nick: jugador ? jugador.nick : 'Jugador',
+					x: datos.x,
+					y: datos.y,
+					direccion: datos.direccion,
+					vida: datos.vida,
+					tanque: jugador ? jugador.tanque : 'equilibrado'
+				});
+			});
+			
+			// Manejar disparos
+			socket.on("jugadorDisparo", function(datos) {
+				const codigo = datos.codigo ? datos.codigo.toLowerCase() : null;
+				if (!codigo) return;
+				
+				// Retransmitir disparo a todos los demás
+				socket.to(codigo).emit("disparo", {
+					socketId: socket.id,
+					x: datos.x,
+					y: datos.y,
+					vx: datos.vx,
+					vy: datos.vy,
+					direccion: datos.direccion
+				});
+			});
+			
+			// Manejar daño a jugador
+			socket.on("jugadorDañado", function(datos) {
+				const codigo = datos.codigo ? datos.codigo.toLowerCase() : null;
+				if (!codigo) return;
+				
+				const partida = sistema.partidas[codigo];
+				if (!partida) return;
+				
+				// Encontrar jugador dañado
+				const jugador = partida.jugadores.find(j => j.socketId === datos.targetSocketId);
+				if (jugador) {
+					jugador.vida = datos.vidaRestante;
+					
+					// Notificar a todos
+					io.to(codigo).emit("jugadorRecibeDaño", {
+						socketId: datos.targetSocketId,
+						vidaRestante: datos.vidaRestante,
+						atacanteSocketId: socket.id
+					});
+					
+					// Si el jugador murió
+					if (datos.vidaRestante <= 0) {
+						io.to(codigo).emit("jugadorEliminado", {
+							socketId: datos.targetSocketId,
+							nick: jugador.nick,
+							eliminadoPor: datos.atacanteNick
+						});
+					}
 				}
 			});
 			

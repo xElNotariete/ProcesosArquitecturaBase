@@ -527,10 +527,16 @@
             // Crear instancia del juego
             juego = new TankBattle();
             juego.ws = ws;
+            juego.miSocketId = ws ? ws.id : null;
             
-            // Iniciar juego pasando el modo
+            // Añadir información del jugador actual a los datos de la partida
+            if (partidaData) {
+                partidaData.miNick = usuarioActual ? usuarioActual.nick : 'Jugador';
+            }
+            
+            // Iniciar juego pasando el modo y datos de la partida (incluyendo semilla)
             const esMultijugador = codigoPartida ? true : false;
-            juego.iniciar('gameCanvas', esMultijugador, codigoPartida, modo);
+            juego.iniciar('gameCanvas', esMultijugador, codigoPartida, modo, partidaData);
             
             // Configurar tanque del jugador según elección
             if (juego.jugador) {

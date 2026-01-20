@@ -350,6 +350,9 @@ Sistema.prototype.crearPartidaMultijugador = function(datos) {
   partida.maxJug = datos.modo === '1vs1' ? 2 : 4;
   partida.estado = 'esperando';
   
+  // Semilla para generar el mismo mapa en todos los clientes
+  partida.semillaMapa = Date.now() + Math.floor(Math.random() * 1000000);
+  
   // Agregar jugador creador (sin socketId aún, se agregará cuando se conecte por WebSocket)
   partida.jugadores.push({
     email: datos.jugador.email,
@@ -357,12 +360,14 @@ Sistema.prototype.crearPartidaMultijugador = function(datos) {
     socketId: null, // Se asignará cuando se conecte
     tanque: null, // Se elegirá después
     puntos: 0,
-    vidas: 3
+    vidas: 3,
+    x: null,
+    y: null
   });
   
   this.partidas[codigo] = partida;
   
-  console.log('[Sistema] Partida creada:', codigo, 'Modo:', partida.modo, 'Creador:', datos.jugador.nick);
+  console.log('[Sistema] Partida creada:', codigo, 'Modo:', partida.modo, 'Semilla:', partida.semillaMapa);
   return partida;
 };
 

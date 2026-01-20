@@ -456,8 +456,8 @@ Tanque.prototype.dibujar = function(ctx) {
 
 // =============== INICIALIZACIÓN ===============
 
-TankBattle.prototype.iniciar = function(canvasId, esMultijugador, codigoPartida, modo) {
-    console.log('[TankBattle] Iniciando juego...', {esMultijugador, codigoPartida, modo});
+TankBattle.prototype.iniciar = function(canvasId, esMultijugador, codigoPartida, modo, datosPartida) {
+    console.log('[TankBattle] Iniciando juego...', {esMultijugador, codigoPartida, modo, datosPartida});
     
     this.canvas = document.getElementById(canvasId);
     if (!this.canvas) {
@@ -470,16 +470,21 @@ TankBattle.prototype.iniciar = function(canvasId, esMultijugador, codigoPartida,
     this.esMultijugador = esMultijugador || false;
     this.codigoPartida = codigoPartida || null;
     this.modo = modo || 'individual';
+    this.datosPartida = datosPartida || null;
     
     // Configurar tamaño responsive
     this.ajustarTamañoCanvas();
     window.addEventListener('resize', () => this.ajustarTamañoCanvas());
     
     this.tiempoInicio = Date.now();
-    this.generarMapa();
-    console.log('[TankBattle] Mapa generado');
     
-    this.crearJugador();
+    // Usar semilla compartida en multijugador para generar el mismo mapa
+    const semilla = datosPartida && datosPartida.semillaMapa ? datosPartida.semillaMapa : null;
+    this.generarMapa(semilla);
+    console.log('[TankBattle] Mapa generado con semilla:', semilla);
+    
+    // Crear jugador en posición según su índice en la partida
+    this.crearJugador(datosPartida);
     console.log('[TankBattle] Jugador creado');
     
     // CRITICAL FIX: Solo crear enemigos IA en modo individual
@@ -520,45 +525,105 @@ TankBattle.prototype.configurarWebSocket = function() {
     
     const juego = this;
     
-    // Recibir estado del juego
-    this.ws.on('estadoJuego', function(data) {
-        if (data.codigoPartida !== juego.codigoPartida) return;
-        
-        // Actualizar jugadores remotos
-        juego.jugadoresRemoto = data.jugadores.filter(j => j.id !== juego.jugador.id);
-    });
+    // Guardar nuestro socket ID
+    this.miSocketId = this.ws.id;
+    console.log('[TankBattle] Mi socket ID:', this.miSocketId);
     
-    // Nuevo jugador se une
-    this.ws.on('jugadorUnido', function(data) {
-        if (data.codigoPartida !== juego.codigoPartida) return;
-        console.log('Jugador unido:', data.jugador.nombre);
+    // Recibir movimiento de otros jugadores
+    this.ws.on('jugadorMovio', function(data) {
+        console.log('[WS] Jugador movió:', data.nick, data.x, data.y);
+        
+        // Crear o actualizar jugador remoto
+        if (!juego.jugadoresRemoto[data.socketId]) {
+            // Determinar color basado en si es enemigo
+            const coloresEnemigos = ['#ff6b35', '#00ff00', '#00ffff'];
+            const indice = Object.keys(juego.jugadoresRemoto).length;
+            
+            juego.jugadoresRemoto[data.socketId] = {
+                nick: data.nick,
+                x: data.x,
+                y: data.y,
+                direccion: data.direccion || 0,
+                vida: data.vida || 3,
+                tanque: data.tanque || 'equilibrado',
+                color: coloresEnemigos[indice % coloresEnemigos.length],
+                tamaño: 40
+            };
+            console.log('[TankBattle] Nuevo jugador remoto:', data.nick);
+        } else {
+            juego.jugadoresRemoto[data.socketId].x = data.x;
+            juego.jugadoresRemoto[data.socketId].y = data.y;
+            juego.jugadoresRemoto[data.socketId].direccion = data.direccion;
+            juego.jugadoresRemoto[data.socketId].vida = data.vida;
+        }
     });
     
     // Jugador se desconecta
     this.ws.on('jugadorDesconectado', function(data) {
-        if (data.codigoPartida !== juego.codigoPartida) return;
-        juego.jugadoresRemoto = juego.jugadoresRemoto.filter(j => j.id !== data.jugadorId);
+        console.log('[WS] Jugador desconectado:', data.socketId);
+        delete juego.jugadoresRemoto[data.socketId];
+    });
+    
+    // Jugador eliminado
+    this.ws.on('jugadorEliminado', function(data) {
+        console.log('[WS] Jugador eliminado:', data.nick);
+        delete juego.jugadoresRemoto[data.socketId];
+        
+        // Si somos nosotros los eliminados
+        if (data.socketId === juego.miSocketId) {
+            juego.juegoActivo = false;
+            juego.mostrarPantallaDerrota();
+        }
+        
+        // Verificar si ganamos (solo quedamos nosotros)
+        if (Object.keys(juego.jugadoresRemoto).length === 0 && juego.jugador.vida > 0) {
+            juego.juegoActivo = false;
+            juego.mostrarPantallaVictoria();
+        }
     });
     
     // Recibir disparos de otros jugadores
     this.ws.on('disparo', function(data) {
-        if (data.codigoPartida !== juego.codigoPartida) return;
-        if (data.jugadorId === juego.jugador.id) return;
+        console.log('[WS] Disparo recibido de:', data.socketId);
         
-        // Crear proyectiles del jugador remoto
+        // Calcular velocidad del proyectil basada en dirección
+        const direcciones = [
+            {dx: 1, dy: 0},   // derecha
+            {dx: 0, dy: 1},   // abajo
+            {dx: -1, dy: 0},  // izquierda
+            {dx: 0, dy: -1}   // arriba
+        ];
+        const dir = direcciones[data.direccion || 0];
+        const velocidadProyectil = 6;
+        
         const proyectil = {
             x: data.x,
             y: data.y,
-            vx: data.vx,
-            vy: data.vy,
-            tamaño: data.tamaño,
-            color: data.color,
-            daño: data.daño,
-            alcance: data.alcance,
+            vx: data.vx || dir.dx * velocidadProyectil,
+            vy: data.vy || dir.dy * velocidadProyectil,
+            tamaño: 6,
+            color: '#ff6b35',
+            daño: 1,
+            alcance: 400,
             distanciaRecorrida: 0,
-            dueño: { esJugador: false, id: data.jugadorId }
+            dueño: { esJugador: false, socketId: data.socketId, esRemoto: true }
         };
         juego.proyectiles.push(proyectil);
+    });
+    
+    // Jugador recibe daño
+    this.ws.on('jugadorRecibeDaño', function(data) {
+        console.log('[WS] Jugador recibe daño:', data.socketId, 'vida:', data.vidaRestante);
+        
+        if (data.socketId === juego.miSocketId) {
+            // Somos nosotros
+            juego.jugador.vida = data.vidaRestante;
+            if (data.vidaRestante <= 0) {
+                juego.juegoActivo = false;
+            }
+        } else if (juego.jugadoresRemoto[data.socketId]) {
+            juego.jugadoresRemoto[data.socketId].vida = data.vidaRestante;
+        }
     });
 };
 
@@ -566,16 +631,36 @@ TankBattle.prototype.enviarEstado = function() {
     if (!this.esMultijugador || !this.ws || !this.jugador) return;
     
     this.ws.emit('actualizarPosicion', {
-        codigoPartida: this.codigoPartida,
+        codigo: this.codigoPartida,
         x: this.jugador.x,
         y: this.jugador.y,
-        angulo: this.jugador.angulo,
+        direccion: this.jugador.direccion,
         vida: this.jugador.vida
     });
 };
 
-TankBattle.prototype.generarMapa = function() {
+TankBattle.prototype.enviarDisparo = function(proyectil) {
+    if (!this.esMultijugador || !this.ws) return;
+    
+    this.ws.emit('jugadorDisparo', {
+        codigo: this.codigoPartida,
+        x: proyectil.x,
+        y: proyectil.y,
+        vx: proyectil.vx,
+        vy: proyectil.vy,
+        direccion: this.jugador.direccion
+    });
+};
+
+TankBattle.prototype.generarMapa = function(semilla) {
     this.mapa = [];
+    
+    // Generador de números pseudo-aleatorios con semilla
+    let seed = semilla || Date.now();
+    const random = function() {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+    };
     
     for (let f = 0; f < this.filas; f++) {
         this.mapa[f] = [];
@@ -593,8 +678,8 @@ TankBattle.prototype.generarMapa = function() {
                      (f >= this.filas - 3 && c <= 2) || (f >= this.filas - 3 && c >= this.columnas - 3)) {
                 this.mapa[f][c] = this.VACIO;
             }
-            // Paredes destructibles aleatorias
-            else if (Math.random() < 0.5) {
+            // Paredes destructibles aleatorias (usar random con semilla)
+            else if (random() < 0.5) {
                 this.mapa[f][c] = this.PARED_DESTRUCTIBLE;
             }
             else {
@@ -604,10 +689,33 @@ TankBattle.prototype.generarMapa = function() {
     }
 };
 
-TankBattle.prototype.crearJugador = function() {
-    const x = this.tamañoCelda * 1.5;
-    const y = this.tamañoCelda * 1.5;
+TankBattle.prototype.crearJugador = function(datosPartida) {
+    // Posiciones de spawn para cada jugador (4 esquinas)
+    const spawns = [
+        {c: 1, f: 1},                           // Esquina superior izquierda (jugador 1)
+        {c: this.columnas - 2, f: this.filas - 2}, // Esquina inferior derecha (jugador 2)
+        {c: this.columnas - 2, f: 1},           // Esquina superior derecha (jugador 3)
+        {c: 1, f: this.filas - 2}               // Esquina inferior izquierda (jugador 4)
+    ];
+    
+    // Determinar índice del jugador en la partida
+    let indiceJugador = 0;
+    if (datosPartida && datosPartida.jugadores && this.miSocketId) {
+        indiceJugador = datosPartida.jugadores.findIndex(j => j.socketId === this.miSocketId);
+        if (indiceJugador === -1) indiceJugador = 0;
+    } else if (datosPartida && datosPartida.jugadores && datosPartida.miNick) {
+        indiceJugador = datosPartida.jugadores.findIndex(j => j.nick === datosPartida.miNick);
+        if (indiceJugador === -1) indiceJugador = 0;
+    }
+    
+    const spawn = spawns[indiceJugador % spawns.length];
+    const x = this.tamañoCelda * (spawn.c + 0.5);
+    const y = this.tamañoCelda * (spawn.f + 0.5);
+    
+    console.log('[TankBattle] Jugador spawn en posición', indiceJugador, ':', x, y);
+    
     this.jugador = new Tanque(x, y, this.colores.jugador, true);
+    this.jugador.indice = indiceJugador;
 };
 
 TankBattle.prototype.crearEnemigos = function(cantidad) {
@@ -653,6 +761,11 @@ TankBattle.prototype.configurarControles = function() {
             if (proyectiles) {
                 juego.proyectiles.push(...proyectiles);
                 juego.crearParticulas(juego.jugador.x, juego.jugador.y, juego.jugador.color, 5);
+                
+                // Enviar disparo a otros jugadores en multijugador
+                if (juego.esMultijugador && proyectiles.length > 0) {
+                    juego.enviarDisparo(proyectiles[0]);
+                }
             }
         }
         
@@ -996,8 +1109,8 @@ TankBattle.prototype.actualizar = function() {
             }
         }
         
-        // Colisión con enemigos
-        if (p.dueño.esJugador) {
+        // Colisión con enemigos (IA - solo modo individual)
+        if (p.dueño.esJugador && this.modo === 'individual') {
             for (let j = 0; j < this.enemigos.length; j++) {
                 const enemigo = this.enemigos[j];
                 if (enemigo.vida <= 0) continue;
@@ -1020,6 +1133,31 @@ TankBattle.prototype.actualizar = function() {
                             console.log('[TankBattle] ¡VICTORIA!');
                             setTimeout(() => this.gameOver(true), 500);
                         }
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // Colisión con jugadores remotos (multijugador)
+        if (p.dueño.esJugador && this.esMultijugador) {
+            for (let socketId in this.jugadoresRemoto) {
+                const remoto = this.jugadoresRemoto[socketId];
+                if (remoto.vida <= 0) continue;
+                
+                const dist = Math.hypot(remoto.x - p.x, remoto.y - p.y);
+                if (dist < 25) {
+                    this.proyectiles.splice(i, 1);
+                    this.crearParticulas(p.x, p.y, remoto.color, 15);
+                    
+                    // Notificar al servidor que dañamos a este jugador
+                    if (this.ws) {
+                        this.ws.emit('jugadorDañado', {
+                            codigo: this.codigoPartida,
+                            targetSocketId: socketId,
+                            vidaRestante: remoto.vida - 1,
+                            atacanteNick: this.datosPartida ? this.datosPartida.miNick : 'Jugador'
+                        });
                     }
                     break;
                 }
@@ -1182,26 +1320,35 @@ TankBattle.prototype.dibujar = function() {
         }
     }
     
-    // Enemigos
-    for (let enemigo of this.enemigos) {
-        if (enemigo.vida > 0) {
-            enemigo.dibujar(ctx);
+    // Enemigos (solo modo individual)
+    if (this.modo === 'individual') {
+        for (let enemigo of this.enemigos) {
+            if (enemigo.vida > 0) {
+                enemigo.dibujar(ctx);
+            }
         }
     }
     
     // Jugadores remotos (multijugador)
     if (this.esMultijugador && this.jugadoresRemoto) {
-        for (let jugRemoto of this.jugadoresRemoto) {
+        for (let socketId in this.jugadoresRemoto) {
+            const jugRemoto = this.jugadoresRemoto[socketId];
+            if (!jugRemoto || jugRemoto.vida <= 0) continue;
+            
             ctx.save();
             ctx.translate(jugRemoto.x, jugRemoto.y);
-            ctx.rotate(jugRemoto.angulo);
             
-            // Dibujar tanque remoto simplificado
-            ctx.fillStyle = '#00fff9'; // Color cyan para diferenciar
-            ctx.strokeStyle = '#0affff';
+            // Rotar según dirección
+            const angulos = [0, Math.PI/2, Math.PI, -Math.PI/2]; // derecha, abajo, izquierda, arriba
+            const angulo = angulos[jugRemoto.direccion || 0];
+            ctx.rotate(angulo);
+            
+            // Dibujar tanque remoto
+            ctx.fillStyle = jugRemoto.color || '#ff6b35';
+            ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
             
-            // Cuerpo
+            // Cuerpo del tanque
             ctx.fillRect(-20, -15, 40, 30);
             ctx.strokeRect(-20, -15, 40, 30);
             
@@ -1215,13 +1362,25 @@ TankBattle.prototype.dibujar = function() {
             ctx.fillRect(0, -4, 25, 8);
             ctx.strokeRect(0, -4, 25, 8);
             
-            // Nombre del jugador
-            ctx.rotate(-jugRemoto.angulo);
+            ctx.restore();
+            
+            // Nombre del jugador (sin rotación)
+            ctx.save();
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 12px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(jugRemoto.nombre || 'Jugador', 0, -35);
+            ctx.shadowColor = '#000';
+            ctx.shadowBlur = 3;
+            ctx.fillText(jugRemoto.nick || 'Jugador', jugRemoto.x, jugRemoto.y - 35);
             
+            // Barra de vida
+            const anchoVida = 40;
+            const altoVida = 5;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(jugRemoto.x - anchoVida/2, jugRemoto.y - 28, anchoVida, altoVida);
+            ctx.fillStyle = jugRemoto.vida > 1 ? '#00ff00' : '#ff0000';
+            ctx.fillRect(jugRemoto.x - anchoVida/2, jugRemoto.y - 28, anchoVida * (jugRemoto.vida / 3), altoVida);
+            ctx.shadowBlur = 0;
             ctx.restore();
         }
     }
