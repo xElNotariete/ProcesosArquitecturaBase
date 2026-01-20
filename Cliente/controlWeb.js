@@ -919,7 +919,7 @@ function ControlWeb() {
     setTimeout(() => $("#inputCodigoPartida").focus(), 300);
     
     $("#btnConfirmarUnirse").on("click", function() {
-      const codigo = $("#inputCodigoPartida").val().trim().toLowerCase(); // Normalizar a minúsculas
+      const codigo = $("#inputCodigoPartida").val().trim().toUpperCase();
       if (!codigo) {
         $("#inputCodigoPartida").css('border-color', '#ff0000').addClass('shake');
         setTimeout(() => $("#inputCodigoPartida").css('border-color', '#ff1493').removeClass('shake'), 500);
@@ -1288,10 +1288,6 @@ function ControlWeb() {
       .then(res => res.json())
       .then(data => {
         if (data.ok && data.codigo) {
-          console.log('[ControlWeb] Partida creada exitosamente');
-          console.log('[ControlWeb] Código:', data.codigo);
-          console.log('[ControlWeb] Redirigiendo a juego...');
-          // Redirigir inmediatamente
           window.location.href = '/juego?codigo=' + data.codigo + '&tanque=' + tipoTanque + '&modo=' + modo;
         } else {
           alert('Error al crear partida');
