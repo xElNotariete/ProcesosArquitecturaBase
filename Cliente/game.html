@@ -349,7 +349,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const modo = urlParams.get('modo') || 'individual';
         const tanque = urlParams.get('tanque') || 'equilibrado';
-        const codigoPartida = urlParams.get('codigo');
+        const codigoPartidaRaw = urlParams.get('codigo');
+        const codigoPartida = codigoPartidaRaw ? codigoPartidaRaw.toLowerCase() : null; // Normalizar a minúsculas
         
         console.log('[Game] Parámetros:', {modo, tanque, codigoPartida});
         
